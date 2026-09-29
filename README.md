@@ -20,7 +20,7 @@
 - ETF、權證、特別股等非普通股不列入
 - 外資數字為「外資及陸資」＋「外資自營商」合計；自營商為「自行買賣」＋「避險」合計
 - 金額為「買賣超股數 × 當日收盤價」的估算值，非實際成交金額
-- 手動執行，不含自動排程
+- 可手動執行，也可以用 GitHub Actions 在雲端每天自動推播（見「雲端自動推播」）
 
 ## FinMind 帳號注意事項
 
@@ -115,6 +115,9 @@ python chip_report.py --formats html,xlsx
 :: 產生報告後推播摘要到 Telegram / LINE（設定方式見下方）
 python chip_report.py --notify
 
+:: 只處理今天的資料；休市或資料尚未更新時不產生報告、不推播
+python chip_report.py --today-only --notify
+
 :: 指定報告輸出資料夾（預設為 reports）
 python chip_report.py --output-dir D:\籌碼報告
 ```
@@ -163,6 +166,51 @@ setx LINE_USER_ID "你的UserID"
 ```
 
 LINE 官方帳號免費方案每月有推播則數上限，個人每日使用一則通常足夠。
+
+## 雲端自動推播（GitHub Actions）
+
+設定完成後，GitHub 會在**週一至週五晚上約 9 點（台灣時間）**自動產生報告並推播，電腦關機也不影響。
+
+- 排程執行時會自動加上 `--today-only`：國定假日或當天沒有資料時會直接跳過，不會重複推播舊資料
+- GitHub 的排程常會延遲幾分鐘到幾十分鐘，實際推播時間可能落在 21:00～22:00 之間
+- 排程設定在 `.github/workflows/daily-report.yml`，要改時間請修改 `cron` 那一行（使用 UTC 時間，台灣時間減 8 小時）
+
+### 1. 把 token 存到 GitHub Secrets
+
+Secrets 會加密保存，不會出現在程式碼或執行記錄中。
+
+1. 打開 GitHub 上的本專案頁面，點上方「**Settings**」
+2. 左側選單點「**Secrets and variables**」→「**Actions**」
+3. 按「**New repository secret**」，依序新增以下項目（**Name 必須完全一致**，Secret 欄位貼上對應的值）：
+
+| Name | 內容 | 是否必要 |
+|---|---|---|
+| `FINMIND_TOKEN` | FinMind API token | 必要 |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Channel access token | 使用 LINE 時 |
+| `LINE_USER_ID` | LINE User ID（U 開頭 33 碼） | 使用 LINE 時 |
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | 使用 Telegram 時 |
+| `TELEGRAM_CHAT_ID` | Telegram Chat ID | 使用 Telegram 時 |
+
+### 2. 手動測試一次
+
+1. 點專案頁面上方「**Actions**」
+   （第一次使用若出現提示，按「I understand my workflows, go ahead and enable them」啟用）
+2. 左側點「**台股每日籌碼報告**」
+3. 右側按「**Run workflow**」→ 日期留白、勾選推播 → 按綠色「**Run workflow**」
+4. 約 1 分鐘後手機收到推播即設定完成；若出現紅色 ✗，點進去展開「產生報告」步驟看錯誤訊息
+
+手動執行時未指定日期，會抓最近一個交易日的資料（不受 `--today-only` 限制），方便隨時測試。
+
+### 3. 下載 HTML / Excel 報告
+
+每次執行產生的報告檔會保存 30 天：進入「Actions」→ 點選某次執行 → 頁面下方「**Artifacts**」即可下載 ZIP 檔。
+
+### 注意事項
+
+- **執行失敗會收到 Email**：例如 token 過期、推播失敗，GitHub 會寄信通知帳號信箱
+- **公開（public）專案**：連續 60 天沒有任何 commit，GitHub 會自動停用排程，屆時到「Actions」頁面重新啟用即可
+- **私人（private）專案**：每次執行約使用 1 分鐘，免費帳號每月有 2,000 分鐘額度，一個月約用 20～30 分鐘，綽綽有餘
+- 若已改用雲端推播，記得停用電腦上的「工作排程器」工作，避免重複推播
 
 ## 常見問題
 

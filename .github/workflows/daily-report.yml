@@ -1,0 +1,63 @@
+name: 台股每日籌碼報告
+
+on:
+  schedule:
+    # 週一至週五 21:07（台灣時間）＝ 13:07 UTC；GitHub 排程可能延遲數分鐘到數十分鐘
+    - cron: "7 13 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "查詢日期 YYYY-MM-DD（留白＝最近一個交易日）"
+        required: false
+        default: ""
+      notify:
+        description: "推播到 Telegram / LINE"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安裝套件
+        run: pip install -r requirements.txt
+
+      - name: 產生報告
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+          INPUT_NOTIFY: ${{ github.event.inputs.notify }}
+        run: |
+          args=()
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # 排程執行：只推播當天資料，休市日自動跳過
+            args+=(--today-only --notify)
+          else
+            [ -n "$INPUT_DATE" ] && args+=(--date "$INPUT_DATE")
+            [ "$INPUT_NOTIFY" = "true" ] && args+=(--notify)
+          fi
+          python chip_report.py "${args[@]}"
+
+      - name: 上傳報告檔案
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chip-report-${{ github.run_number }}
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 30

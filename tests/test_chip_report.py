@@ -123,6 +123,12 @@ class ReportTest(unittest.TestCase):
 
 
 class MainTest(unittest.TestCase):
+    def setUp(self):
+        # 固定「今天」，讓自動找交易日的結果不受實際日期影響
+        patcher = mock.patch.object(chip_report, "taipei_today", return_value=date(2026, 9, 29))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_main_end_to_end(self):
         with tempfile.TemporaryDirectory() as tmp, \
                 mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
@@ -170,6 +176,39 @@ class MainTest(unittest.TestCase):
         line_body = post.call_args_list[1].kwargs["json"]
         self.assertEqual(line_body["to"], "U1")
         self.assertIn("【外資買超】", line_body["messages"][0]["text"])
+
+    def _run_today_only(self, today):
+        env = {"FINMIND_TOKEN": "t", "TELEGRAM_BOT_TOKEN": "tg", "TELEGRAM_CHAT_ID": "1"}
+        ok = mock.Mock(status_code=200)
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(chip_report, "taipei_today", return_value=today), \
+                mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
+                mock.patch.dict(os.environ, env), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--today-only", "--notify",
+                                                "--output-dir", tmp]), \
+                mock.patch("notify.requests.post", return_value=ok) as post, \
+                mock.patch("sys.stdout"):
+            code = chip_report.main()
+            files = list(Path(tmp).iterdir())
+        return code, files, post
+
+    def test_today_only_with_data(self):
+        code, files, post = self._run_today_only(date(2026, 9, 25))
+        self.assertEqual(code, 0)
+        self.assertEqual(len(files), 3)
+        post.assert_called_once()
+
+    def test_today_only_without_data_skips(self):
+        code, files, post = self._run_today_only(date(2026, 9, 28))
+        self.assertEqual(code, 0)
+        self.assertEqual(files, [])
+        post.assert_not_called()
+
+    def test_taipei_today_uses_utc_plus_8(self):
+        fake_now = chip_report.datetime(2026, 9, 28, 17, 0, tzinfo=chip_report.timezone.utc)
+        with mock.patch.object(chip_report, "datetime") as dt:
+            dt.now.side_effect = lambda tz: fake_now.astimezone(tz)
+            self.assertEqual(chip_report.taipei_today(), date(2026, 9, 29))
 
 
 if __name__ == "__main__":
