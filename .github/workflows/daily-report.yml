@@ -2,8 +2,10 @@ name: 台股每日籌碼報告
 
 on:
   schedule:
-    # 週一至週五 21:07（台灣時間）＝ 13:07 UTC；GitHub 排程可能延遲數分鐘到數十分鐘
-    - cron: "7 13 * * 1-5"
+    # 週一至週五 18:07～22:07（台灣時間）每小時一次＝ 10:07～14:07 UTC。
+    # GitHub 排程在忙碌時可能延遲或被略過，多排幾次當作備援；
+    # 當天報告發布成功後，之後的排程會在「檢查今天是否已完成」步驟直接跳過。
+    - cron: "7 10-14 * * 1-5"
   workflow_dispatch:
     inputs:
       date:
@@ -29,15 +31,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 檢查今天是否已完成
+        id: check
+        if: github.event_name == 'schedule'
+        run: |
+          day=$(TZ=Asia/Taipei date +%F)
+          if git fetch -q --depth 1 origin gh-pages 2>/dev/null && git cat-file -e "FETCH_HEAD:${day}.html" 2>/dev/null; then
+            echo "${day} 的報告已發布，本次排程跳過"
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "${day} 的報告尚未發布，開始產生"
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.check.outputs.done != 'true'
         with:
           python-version: "3.12"
           cache: pip
 
       - name: 安裝套件
+        if: steps.check.outputs.done != 'true'
         run: pip install -r requirements.txt
 
       - name: 產生報告
+        if: steps.check.outputs.done != 'true'
         env:
           FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
           INPUT_DATE: ${{ github.event.inputs.date }}
