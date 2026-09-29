@@ -1,6 +1,8 @@
 """推播報告摘要到 Telegram / LINE"""
 
 import os
+import sys
+from pathlib import Path
 
 import requests
 
@@ -15,8 +17,14 @@ SUMMARY_SECTIONS = {
 }
 
 
-def build_summary(report, top=5):
-    """產生推播用純文字摘要。"""
+STREAK_SECTIONS = {
+    "foreign_streak": "外資連買",
+    "trust_streak": "投信連買",
+}
+
+
+def build_summary(report, top=5, report_url=None):
+    """產生推播用純文字摘要；report_url 為完整報告網址（選用）。"""
     lines = [f"📊 台股籌碼報告 {report.trade_date.isoformat()}", "", "【三大法人】"]
     ov = report.overview
     for row in ov.rows:
@@ -45,6 +53,25 @@ def build_summary(report, top=5):
             amount = row[amount_i]
             amount_text = "" if amount is None else f"（{format_cell(amount, 'signed_yi')} 億）"
             lines.append(f"{row[0]}. {row[id_i]} {row[name_i]} {lots}{amount_text}")
+
+    for key, label in STREAK_SECTIONS.items():
+        section = by_key.get(key)
+        if section is None:
+            continue
+        lines += ["", f"【{label}】"]
+        if not section.rows:
+            lines.append("（無資料）")
+            continue
+        id_i, name_i = section.col("代號"), section.col("名稱")
+        days_i, total_i = section.col("連買天數"), section.col("累計買超(張)")
+        for row in section.rows[:top]:
+            lines.append(
+                f"{row[0]}. {row[id_i]} {row[name_i]} 連 {row[days_i]} 天"
+                f"（累計 {format_cell(row[total_i], 'signed_int')} 張）"
+            )
+
+    if report_url:
+        lines += ["", f"完整報告：{report_url}"]
     return "\n".join(lines)
 
 
@@ -81,3 +108,37 @@ def configured_channels():
     if line_token and line_user:
         channels.append(("LINE", lambda text: send_line(line_token, line_user, text)))
     return channels
+
+
+def send_all(channels, text):
+    """發送到所有管道，回傳是否全部成功。"""
+    ok = True
+    for name, send in channels:
+        try:
+            send(text)
+            print(f"已推播到 {name}")
+        except Exception as exc:  # 單一管道失敗不影響其他管道
+            print(f"錯誤：{exc}", file=sys.stderr)
+            ok = False
+    return ok
+
+
+def main(argv):
+    """推播已產生的摘要檔：python notify.py 摘要檔路徑"""
+    if len(argv) != 2:
+        print("用法：python notify.py 摘要檔路徑", file=sys.stderr)
+        return 1
+    channels = configured_channels()
+    if not channels:
+        print(
+            "錯誤：需設定 TELEGRAM_BOT_TOKEN＋TELEGRAM_CHAT_ID，"
+            "或 LINE_CHANNEL_ACCESS_TOKEN＋LINE_USER_ID。",
+            file=sys.stderr,
+        )
+        return 1
+    text = Path(argv[1]).read_text(encoding="utf-8")
+    return 0 if send_all(channels, text) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

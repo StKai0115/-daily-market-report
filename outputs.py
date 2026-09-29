@@ -179,6 +179,8 @@ SHEET_NAMES = {
     "trust_buy": "投信買超",
     "trust_sell": "投信賣超",
     "sync_buy": "外資投信同步買超",
+    "foreign_streak": "外資連續買超",
+    "trust_streak": "投信連續買超",
     "industry": "產業別",
     "all": "全部個股",
 }
