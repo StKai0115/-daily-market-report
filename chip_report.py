@@ -9,12 +9,13 @@
     python chip_report.py --top 30           # 每個排行顯示 30 檔
     python chip_report.py --rank-by amount   # 排行改依金額排序
     python chip_report.py --notify           # 產生報告後推播摘要到 Telegram / LINE
+    python chip_report.py --today-only       # 今天沒有資料（休市或尚未更新）就不產生報告
 """
 
 import argparse
 import os
 import sys
-from datetime import date, datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import finmind
@@ -23,6 +24,13 @@ from notify import build_summary, configured_channels
 from outputs import render_html, render_markdown, write_excel
 
 FORMATS = ("md", "html", "xlsx")
+
+# 台灣時區（無日光節約時間）；雲端主機多為 UTC，日期需以台灣時間判斷
+TAIPEI_TZ = timezone(timedelta(hours=8))
+
+
+def taipei_today():
+    return datetime.now(TAIPEI_TZ).date()
 
 
 def parse_formats(value):
@@ -58,6 +66,11 @@ def parse_args():
         help="報告輸出資料夾（預設 reports）",
     )
     parser.add_argument(
+        "--today-only",
+        action="store_true",
+        help="只處理今天（台灣時間）的資料；今天沒有資料時不產生報告也不推播",
+    )
+    parser.add_argument(
         "--notify",
         action="store_true",
         help="推播摘要到 Telegram / LINE（需設定對應環境變數）",
@@ -83,6 +96,8 @@ def main():
         except ValueError:
             print("錯誤：日期格式應為 YYYY-MM-DD，例如 2026-09-25。", file=sys.stderr)
             return 1
+    elif args.today_only:
+        trade_date = taipei_today()
 
     channels = configured_channels() if args.notify else []
     if args.notify and not channels:
@@ -100,11 +115,14 @@ def main():
         print("讀取三大法人買賣資料…")
         if trade_date:
             inst_rows = finmind.load_institutional(token, trade_date)
+            if not inst_rows and args.today_only and not args.date:
+                print(f"{trade_date} 沒有三大法人資料（休市或尚未更新），本次不產生報告。")
+                return 0
             if not inst_rows:
                 print(f"錯誤：{trade_date} 查無三大法人資料（可能是休市日或資料尚未更新）。", file=sys.stderr)
                 return 1
         else:
-            trade_date, inst_rows = finmind.find_latest_trading_day(token, date.today())
+            trade_date, inst_rows = finmind.find_latest_trading_day(token, taipei_today())
 
         print("讀取股價資料…")
         prices = finmind.load_prices(token, trade_date)
