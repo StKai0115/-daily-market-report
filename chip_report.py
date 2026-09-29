@@ -10,6 +10,8 @@
     python chip_report.py --rank-by amount   # 排行改依金額排序
     python chip_report.py --notify           # 產生報告後推播摘要到 Telegram / LINE
     python chip_report.py --today-only       # 今天沒有資料（休市或尚未更新）就不產生報告
+    python chip_report.py --streak-min 5     # 連續買超區塊只列連買 5 天以上
+    python chip_report.py --no-streak        # 不計算連續買超天數（少抓歷史資料）
 """
 
 import argparse
@@ -19,8 +21,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import finmind
-from analysis import build_report, build_stocks
-from notify import build_summary, configured_channels
+from analysis import apply_streaks, build_report, build_stocks
+from notify import build_summary, configured_channels, send_all
 from outputs import render_html, render_markdown, write_excel
 
 FORMATS = ("md", "html", "xlsx")
@@ -66,6 +68,27 @@ def parse_args():
         help="報告輸出資料夾（預設 reports）",
     )
     parser.add_argument(
+        "--streak-days",
+        type=int,
+        default=10,
+        help="連續買超天數最多回溯幾個交易日（含當日，預設 10）",
+    )
+    parser.add_argument(
+        "--streak-min",
+        type=int,
+        default=3,
+        help="連續買超區塊的最少連買天數（預設 3）",
+    )
+    parser.add_argument(
+        "--no-streak",
+        action="store_true",
+        help="不計算連續買超天數（不抓歷史資料，執行較快）",
+    )
+    parser.add_argument(
+        "--summary-file",
+        help="另存推播摘要文字檔（供之後用 notify.py 推播）",
+    )
+    parser.add_argument(
         "--today-only",
         action="store_true",
         help="只處理今天（台灣時間）的資料；今天沒有資料時不產生報告也不推播",
@@ -87,6 +110,9 @@ def main():
         return 1
     if args.top <= 0:
         print("錯誤：--top 必須大於 0。", file=sys.stderr)
+        return 1
+    if not args.no_streak and not 2 <= args.streak_min <= args.streak_days:
+        print("錯誤：--streak-min 需介於 2 與 --streak-days 之間。", file=sys.stderr)
         return 1
 
     trade_date = None
@@ -126,6 +152,11 @@ def main():
 
         print("讀取股價資料…")
         prices = finmind.load_prices(token, trade_date)
+
+        history = []
+        if not args.no_streak:
+            print(f"讀取前 {args.streak_days - 1} 個交易日的法人資料（計算連續買超天數）…")
+            history = finmind.load_history(token, trade_date, args.streak_days - 1)
     except finmind.FinMindError as exc:
         print(f"錯誤：{exc}", file=sys.stderr)
         return 1
@@ -134,7 +165,13 @@ def main():
         print(f"警告：{trade_date} 查無股價資料，金額、漲跌幅、佔成交量將顯示為「-」。", file=sys.stderr)
 
     stocks = build_stocks(inst_rows, prices, stock_info)
-    report = build_report(trade_date, stocks, args.top, args.rank_by)
+    streak_window = None
+    if not args.no_streak:
+        apply_streaks(stocks, history)
+        streak_window = len(history) + 1
+    report = build_report(
+        trade_date, stocks, args.top, args.rank_by, streak_window, args.streak_min
+    )
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -165,17 +202,17 @@ def main():
     for path in saved:
         print(f"報告已儲存：{path}")
 
-    exit_code = 0
-    if channels:
-        summary = build_summary(report)
-        for name, send in channels:
-            try:
-                send(summary)
-                print(f"已推播到 {name}")
-            except Exception as exc:  # 推播失敗不影響已產生的報告
-                print(f"錯誤：{exc}", file=sys.stderr)
-                exit_code = 1
-    return exit_code
+    # 設定 REPORT_BASE_URL（例如 GitHub Pages 網址）時，摘要會附上完整報告連結
+    base_url = os.environ.get("REPORT_BASE_URL", "").strip().rstrip("/")
+    report_url = f"{base_url}/{trade_date.isoformat()}.html" if base_url else None
+    summary = build_summary(report, report_url=report_url)
+    if args.summary_file:
+        Path(args.summary_file).write_text(summary, encoding="utf-8")
+        print(f"推播摘要已儲存：{args.summary_file}")
+
+    if channels and not send_all(channels, summary):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

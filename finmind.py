@@ -86,3 +86,20 @@ def find_latest_trading_day(token, start, lookback=10):
         if rows:
             return day, rows
     raise FinMindError(f"{start} 往前 {lookback} 天內都查不到三大法人資料")
+
+
+def load_history(token, trade_date, days):
+    """取得 trade_date 之前 days 個交易日的法人資料，由近到遠：[(日期, rows)]。"""
+    history = []
+    day = trade_date
+    # 最多往前找 days×2＋10 個日曆日，涵蓋週末與連假
+    for _ in range(days * 2 + 10):
+        if len(history) >= days:
+            break
+        day -= timedelta(days=1)
+        if day.weekday() >= 5:
+            continue
+        rows = load_institutional(token, day)
+        if rows:
+            history.append((day, rows))
+    return history

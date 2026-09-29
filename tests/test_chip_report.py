@@ -10,7 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import chip_report  # noqa: E402
 import finmind  # noqa: E402
-from analysis import build_report, build_stocks  # noqa: E402
+import notify  # noqa: E402
+import pages  # noqa: E402
+from analysis import apply_streaks, build_report, build_stocks  # noqa: E402
 from notify import build_summary  # noqa: E402
 from outputs import render_html, render_markdown, write_excel  # noqa: E402
 
@@ -40,10 +42,32 @@ PRICES = [
 ]
 
 
+def _inst(stock_id, name, net):
+    return {"stock_id": stock_id, "name": name,
+            "buy": max(net, 0), "sell": max(-net, 0)}
+
+
+# 2026-09-25（五）之前的歷史資料；09-22（二）當作休市日沒有資料
+HISTORY = {
+    "2026-09-24": [_inst("2330", "Foreign_Investor", 1_000_000),
+                   _inst("2330", "Investment_Trust", 50_000),
+                   _inst("2317", "Foreign_Investor", -100_000)],
+    "2026-09-23": [_inst("2330", "Foreign_Investor", 2_000_000),
+                   _inst("2330", "Investment_Trust", -10_000),
+                   _inst("2317", "Foreign_Investor", 300_000)],
+    "2026-09-21": [_inst("2330", "Foreign_Investor", 500_000),
+                   _inst("2330", "Foreign_Dealer_Self", -1_000)],
+    "2026-09-18": [_inst("2330", "Foreign_Investor", -700_000)],
+}
+
+
 def fake_fetch(token, dataset, **params):
     if dataset == "TaiwanStockInfo":
         return STOCK_INFO
-    if params.get("start_date") != "2026-09-25":
+    day = params.get("start_date")
+    if dataset == "TaiwanStockInstitutionalInvestorsBuySell" and day in HISTORY:
+        return HISTORY[day]
+    if day != "2026-09-25":
         return []
     if dataset == "TaiwanStockInstitutionalInvestorsBuySell":
         return INSTITUTIONAL
@@ -122,6 +146,112 @@ class ReportTest(unittest.TestCase):
             self.assertEqual(wb["外資買超"]["B2"].value, "2330")
 
 
+class StreakTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(finmind, "fetch_dataset", fake_fetch)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.day = date(2026, 9, 25)
+        self.stocks = build_stocks(
+            finmind.load_institutional("t", self.day),
+            finmind.load_prices("t", self.day),
+            finmind.load_stock_info("t"),
+        )
+        self.history = finmind.load_history("t", self.day, 9)
+        apply_streaks(self.stocks, self.history)
+
+    def test_history_skips_weekends_and_holidays(self):
+        self.assertEqual(
+            [d.isoformat() for d, _ in self.history],
+            ["2026-09-24", "2026-09-23", "2026-09-21", "2026-09-18"],
+        )
+
+    def test_streak_counts(self):
+        tsmc, hon_hai, gw = self.stocks["2330"], self.stocks["2317"], self.stocks["6488"]
+        # 外資：今日＋09-24＋09-23＋09-21（含外資自營商 -1,000 股仍為買超），09-18 賣超中斷
+        self.assertEqual(tsmc.streak["foreign"], 4)
+        self.assertEqual(tsmc.streak_net["foreign"], 3_001_000 + 1_000_000 + 2_000_000 + 499_000)
+        self.assertEqual(tsmc.streak["trust"], 2)
+        self.assertEqual(hon_hai.streak["foreign"], -2)
+        self.assertEqual(gw.streak["foreign"], -1)  # 09-24 無資料，中斷
+        self.assertEqual(gw.streak["trust"], 0)  # 今日無投信買賣
+
+    def test_streak_sections(self):
+        report = build_report(self.day, self.stocks, top=20,
+                              streak_window=len(self.history) + 1, streak_min=3)
+        by_key = {s.key: s for s in report.sections}
+        foreign = by_key["foreign_streak"]
+        self.assertEqual([r[1] for r in foreign.rows], ["2330"])
+        row = foreign.rows[0]
+        self.assertEqual(row[foreign.col("連買天數")], 4)
+        self.assertEqual(row[foreign.col("累計買超(張)")], 6500)
+        self.assertEqual(by_key["trust_streak"].rows, [])  # 投信只連買 2 天
+        sell = by_key["foreign_sell"]
+        self.assertEqual(
+            {r[1]: r[sell.col("連賣天數")] for r in sell.rows}, {"2317": 2, "6488": 1}
+        )
+        summary = build_summary(report, report_url="https://example.com/2026-09-25.html")
+        self.assertIn("1. 2330 台積電 連 4 天（累計 +6,500 張）", summary)
+        self.assertTrue(summary.endswith("完整報告：https://example.com/2026-09-25.html"))
+
+    def test_no_streak_keeps_original_sections(self):
+        report = build_report(self.day, self.stocks, top=20)
+        keys = [s.key for s in report.sections]
+        self.assertNotIn("foreign_streak", keys)
+        self.assertNotIn("連買天數", [c.header for c in report.sections[0].columns])
+
+
+class PagesTest(unittest.TestCase):
+    def test_publish_builds_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reports, site = Path(tmp) / "reports", Path(tmp) / "site"
+            reports.mkdir()
+            for day in ("2026-09-24", "2026-09-25"):
+                (reports / f"chip_report_{day}.html").write_text(
+                    f"<html><body>\n<main>\n<h1>{day}</h1></main></body></html>", encoding="utf-8"
+                )
+                self.assertEqual(pages.publish(site, reports / f"chip_report_{day}.html"), day)
+            self.assertTrue((site / ".nojekyll").exists())
+            index = (site / "index.html").read_text(encoding="utf-8")
+            self.assertLess(index.index("2026-09-25.html"), index.index("2026-09-24.html"))
+            self.assertIn("2026-09-25（五）", index)
+            self.assertIn("共 2 份報告", index)
+            page = (site / "2026-09-25.html").read_text(encoding="utf-8")
+            self.assertIn('href="index.html"', page)
+
+    def test_publish_rejects_bad_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "report.html"
+            bad.write_text("x", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                pages.publish(Path(tmp) / "site", bad)
+
+
+class NotifyCliTest(unittest.TestCase):
+    def test_sends_summary_file(self):
+        env = {"LINE_CHANNEL_ACCESS_TOKEN": "ln", "LINE_USER_ID": "U1",
+               "TELEGRAM_BOT_TOKEN": "", "TELEGRAM_CHAT_ID": ""}
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.dict(os.environ, env), \
+                mock.patch("notify.requests.post", return_value=mock.Mock(status_code=200)) as post, \
+                mock.patch("sys.stdout"):
+            path = Path(tmp) / "summary.txt"
+            path.write_text("摘要內容", encoding="utf-8")
+            self.assertEqual(notify.main(["notify.py", str(path)]), 0)
+        self.assertEqual(post.call_args.kwargs["json"]["messages"][0]["text"], "摘要內容")
+
+    def test_failure_returns_1(self):
+        env = {"LINE_CHANNEL_ACCESS_TOKEN": "ln", "LINE_USER_ID": "U1"}
+        bad = mock.Mock(status_code=400, text="bad")
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.dict(os.environ, env), \
+                mock.patch("notify.requests.post", return_value=bad), \
+                mock.patch("sys.stderr"):
+            path = Path(tmp) / "summary.txt"
+            path.write_text("x", encoding="utf-8")
+            self.assertEqual(notify.main(["notify.py", str(path)]), 1)
+
+
 class MainTest(unittest.TestCase):
     def setUp(self):
         # 固定「今天」，讓自動找交易日的結果不受實際日期影響
@@ -141,6 +271,19 @@ class MainTest(unittest.TestCase):
             names,
             ["chip_report_2026-09-25.html", "chip_report_2026-09-25.md", "chip_report_2026-09-25.xlsx"],
         )
+
+    def test_summary_file_with_report_url(self):
+        env = {"FINMIND_TOKEN": "t", "REPORT_BASE_URL": "https://u.github.io/repo/"}
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
+                mock.patch.dict(os.environ, env), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--output-dir", tmp,
+                                                "--summary-file", f"{tmp}/summary.txt"]), \
+                mock.patch("sys.stdout"):
+            self.assertEqual(chip_report.main(), 0)
+            summary = Path(tmp, "summary.txt").read_text(encoding="utf-8")
+        self.assertIn("【外資連買】", summary)
+        self.assertIn("完整報告：https://u.github.io/repo/2026-09-25.html", summary)
 
     def test_missing_token(self):
         with mock.patch.dict(os.environ, {"FINMIND_TOKEN": ""}), \
