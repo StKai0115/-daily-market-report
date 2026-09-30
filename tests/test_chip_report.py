@@ -13,6 +13,7 @@ import extras  # noqa: E402
 import finmind  # noqa: E402
 import notify  # noqa: E402
 import pages  # noqa: E402
+import weekly  # noqa: E402
 from analysis import apply_streaks, build_report, build_stocks  # noqa: E402
 from notify import build_summary  # noqa: E402
 from outputs import render_html, render_markdown, write_excel  # noqa: E402
@@ -333,6 +334,69 @@ class ExtrasTest(unittest.TestCase):
         self.assertIn("集保資料日期 2026-09-25", up.note)
 
 
+class WeeklyTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(finmind, "fetch_dataset", fake_fetch)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.day = date(2026, 9, 25)
+        inst = finmind.load_institutional("t", self.day)
+        self.stocks = build_stocks(inst, finmind.load_prices("t", self.day), finmind.load_stock_info("t"))
+        self.history = finmind.load_history("t", self.day, 9)
+        self.days = weekly.week_days(self.day, inst, self.history)
+        prev = {"2330": {"close": 950.0}}
+        self.report = weekly.build_weekly_report(self.day, self.days, self.stocks, 20, prev)
+        self.by_key = {s.key: s for s in self.report.sections}
+
+    def test_week_days_and_previous_day(self):
+        self.assertEqual([d.isoformat() for d, _ in self.days],
+                         ["2026-09-21", "2026-09-23", "2026-09-24", "2026-09-25"])
+        self.assertEqual(weekly.previous_trading_day(self.day, self.history), date(2026, 9, 18))
+
+    def test_weekly_rankings(self):
+        buy = self.by_key["weekly_foreign_buy"]
+        row = buy.rows[0]
+        # 台積電本週外資：09-21 +499,000、09-23 +2,000,000、09-24 +1,000,000、09-25 +3,001,000 股
+        self.assertEqual(row[1], "2330")
+        self.assertEqual(row[buy.col("週買賣超(張)")], 6500)
+        self.assertEqual(row[buy.col("買超天數")], 4)
+        self.assertAlmostEqual(row[buy.col("週漲跌幅")], 50 / 950 * 100)
+        sell = self.by_key["weekly_foreign_sell"]
+        self.assertEqual([r[1] for r in sell.rows], ["6488"])  # 鴻海本週 +300 -100 -200 = 0
+        self.assertEqual(sell.rows[0][sell.col("賣超天數")], 1)
+        self.assertIsNone(sell.rows[0][sell.col("週漲跌幅")])  # 無上週股價
+
+    def test_weekly_overview_and_daily(self):
+        overview = {r[0]: r for r in self.report.overview.rows}
+        self.assertEqual(overview["外資"][1], 6500 + 0 - 800)
+        daily = self.by_key["weekly_daily"]
+        self.assertEqual([r[0] for r in daily.rows], ["09/21（一）", "09/23（三）", "09/24（四）", "09/25（五）"])
+        self.assertEqual(self.report.title, "台股每週籌碼週報 09/21～09/25")
+
+    def test_weekly_summary(self):
+        text = weekly.build_weekly_summary(self.report, report_url="https://x/weekly-2026-09-25.html")
+        self.assertIn("1. 2330 台積電 +6,500 張（買超 4 天）", text)
+        self.assertIn("1. 6488 環球晶 -800 張（賣超 1 天）", text)
+        self.assertIn("【資金流入產業】\n半導體業", text)
+        self.assertTrue(text.endswith("完整週報：https://x/weekly-2026-09-25.html"))
+
+    def test_not_generated_on_other_days_unless_forced(self):
+        def run(argv, today):
+            with tempfile.TemporaryDirectory() as tmp, \
+                    mock.patch.object(chip_report, "taipei_today", return_value=today), \
+                    mock.patch.dict(os.environ, {"FINMIND_TOKEN": "t"}), \
+                    mock.patch.object(sys, "argv", ["chip_report.py", "--output-dir", tmp,
+                                                    "--formats", "md"] + argv), \
+                    mock.patch("sys.stdout"):
+                self.assertEqual(chip_report.main(), 0)
+                return sorted(p.name for p in Path(tmp).iterdir())
+
+        self.assertEqual(run(["--date", "2026-09-24"], date(2026, 9, 24)), ["chip_report_2026-09-24.md"])
+        self.assertIn("weekly_report_2026-09-24.md",
+                      run(["--date", "2026-09-24", "--weekly"], date(2026, 9, 24)))
+        self.assertEqual(run(["--no-weekly"], date(2026, 9, 29)), ["chip_report_2026-09-25.md"])
+
+
 class PagesTest(unittest.TestCase):
     def test_publish_builds_index(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -347,9 +411,23 @@ class PagesTest(unittest.TestCase):
             index = (site / "index.html").read_text(encoding="utf-8")
             self.assertLess(index.index("2026-09-25.html"), index.index("2026-09-24.html"))
             self.assertIn("2026-09-25（五）", index)
-            self.assertIn("共 2 份報告", index)
+            self.assertIn("共 2 份日報、0 份週報", index)
+            self.assertNotIn("每週週報", index)
             page = (site / "2026-09-25.html").read_text(encoding="utf-8")
             self.assertIn('href="index.html"', page)
+
+    def test_publish_weekly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            site = Path(tmp) / "site"
+            for name in ("chip_report_2026-09-25.html", "weekly_report_2026-09-25.html"):
+                src = Path(tmp) / name
+                src.write_text("<main>\n</main>", encoding="utf-8")
+                self.assertEqual(pages.publish(site, src), "2026-09-25")
+            self.assertTrue((site / "weekly-2026-09-25.html").exists())
+            index = (site / "index.html").read_text(encoding="utf-8")
+            self.assertIn('href="weekly-2026-09-25.html"><span>09/21～09/25 週報</span>', index)
+            self.assertLess(index.index("每週週報"), index.index("每日報告"))
+            self.assertIn("共 1 份日報、1 份週報", index)
 
     def test_publish_rejects_bad_name(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -399,9 +477,12 @@ class MainTest(unittest.TestCase):
                 mock.patch("sys.stdout"):
             self.assertEqual(chip_report.main(), 0)
             names = sorted(p.name for p in Path(tmp).iterdir())
+        # 2026-09-25 是週五，會一併產生週報
         self.assertEqual(
             names,
-            ["chip_report_2026-09-25.html", "chip_report_2026-09-25.md", "chip_report_2026-09-25.xlsx"],
+            ["chip_report_2026-09-25.html", "chip_report_2026-09-25.md", "chip_report_2026-09-25.xlsx",
+             "weekly_report_2026-09-25.html", "weekly_report_2026-09-25.md",
+             "weekly_report_2026-09-25.xlsx"],
         )
 
     def test_summary_file_with_report_url(self):
@@ -487,11 +568,14 @@ class MainTest(unittest.TestCase):
                 mock.patch("sys.stdout"):
             self.assertEqual(chip_report.main(), 0)
         urls = [c.args[0] for c in post.call_args_list]
-        self.assertEqual(urls, ["https://api.telegram.org/bottg/sendMessage",
-                                "https://api.line.me/v2/bot/message/push"])
-        line_body = post.call_args_list[1].kwargs["json"]
+        # 週五：Telegram 分兩則（日報、週報），LINE 同一次推播兩個對話框
+        self.assertEqual(urls, ["https://api.telegram.org/bottg/sendMessage"] * 2
+                         + ["https://api.line.me/v2/bot/message/push"])
+        line_body = post.call_args_list[2].kwargs["json"]
         self.assertEqual(line_body["to"], "U1")
+        self.assertEqual(len(line_body["messages"]), 2)
         self.assertIn("【外資買超】", line_body["messages"][0]["text"])
+        self.assertIn("台股每週籌碼週報", line_body["messages"][1]["text"])
 
     def _run_today_only(self, today):
         env = {"FINMIND_TOKEN": "t", "TELEGRAM_BOT_TOKEN": "tg", "TELEGRAM_CHAT_ID": "1"}
@@ -511,8 +595,8 @@ class MainTest(unittest.TestCase):
     def test_today_only_with_data(self):
         code, files, post = self._run_today_only(date(2026, 9, 25))
         self.assertEqual(code, 0)
-        self.assertEqual(len(files), 3)
-        post.assert_called_once()
+        self.assertEqual(len(files), 6)  # 日報＋週報
+        self.assertEqual(post.call_count, 2)  # Telegram 日報、週報各一則
 
     def test_today_only_without_data_skips(self):
         code, files, post = self._run_today_only(date(2026, 9, 28))

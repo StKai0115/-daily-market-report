@@ -9,6 +9,9 @@ import requests
 from outputs import format_cell
 
 TIMEOUT = 30
+
+# 摘要中以此字元分隔多則訊息（例如週五的日報＋週報）；LINE 會在同一次推播送出多個對話框
+MESSAGE_SEPARATOR = "\f"
 SUMMARY_SECTIONS = {
     "foreign_buy": ("外資買超", "買賣超(張)", "金額(億)"),
     "foreign_sell": ("外資賣超", "買賣超(張)", "金額(億)"),
@@ -128,21 +131,30 @@ def _ranked_lines(section, label, header, kind, unit, top=3):
     return lines
 
 
+def split_messages(text):
+    return [part.strip() for part in text.split(MESSAGE_SEPARATOR) if part.strip()]
+
+
 def send_telegram(bot_token, chat_id, text):
-    resp = requests.post(
-        f"https://api.telegram.org/bot{bot_token}/sendMessage",
-        json={"chat_id": chat_id, "text": text[:4096]},
-        timeout=TIMEOUT,
-    )
-    if resp.status_code != 200:
-        raise RuntimeError(f"Telegram 推播失敗（HTTP {resp.status_code}）：{resp.text[:200]}")
+    for part in split_messages(text):
+        resp = requests.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": chat_id, "text": part[:4096]},
+            timeout=TIMEOUT,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"Telegram 推播失敗（HTTP {resp.status_code}）：{resp.text[:200]}")
 
 
 def send_line(channel_token, user_id, text):
     resp = requests.post(
         "https://api.line.me/v2/bot/message/push",
         headers={"Authorization": f"Bearer {channel_token}"},
-        json={"to": user_id, "messages": [{"type": "text", "text": text[:5000]}]},
+        # 同一次推播最多 5 個對話框，依 LINE 計算方式只算一則訊息額度
+        json={
+            "to": user_id,
+            "messages": [{"type": "text", "text": part[:5000]} for part in split_messages(text)[:5]],
+        },
         timeout=TIMEOUT,
     )
     if resp.status_code != 200:
