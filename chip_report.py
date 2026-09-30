@@ -1,7 +1,8 @@
 """台股每日籌碼報告（資料來源：FinMind API）
 
-報告內容：全市場總覽、外資買超／賣超、投信買超／賣超、外資投信同步買超、產業別法人淨買賣
-涵蓋範圍：上市（TWSE）與上櫃（TPEx）普通股
+報告內容：全市場總覽、期貨選擇權籌碼、外資買超／賣超、投信買超／賣超、外資投信同步買超、
+          外資／投信連續買超、產業別法人淨買賣、高股息 ETF、融資融券、千張大戶持股
+涵蓋範圍：上市（TWSE）與上櫃（TPEx）普通股（高股息 ETF 另列）
 
 使用方式：
     python chip_report.py                    # 自動抓最近一個有資料的交易日
@@ -12,16 +13,26 @@
     python chip_report.py --today-only       # 今天沒有資料（休市或尚未更新）就不產生報告
     python chip_report.py --streak-min 5     # 連續買超區塊只列連買 5 天以上
     python chip_report.py --no-streak        # 不計算連續買超天數（少抓歷史資料）
+    python chip_report.py --etfs 0056,00878  # 自訂追蹤的高股息 ETF
+    python chip_report.py --no-margin        # 不產生融資融券區塊（另有 --no-etf、--no-futures、--no-holders）
 """
 
 import argparse
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import finmind
 from analysis import apply_streaks, build_report, build_stocks
+from extras import (
+    DEFAULT_ETFS,
+    build_etf_section,
+    build_futures_section,
+    build_holder_sections,
+    build_margin_sections,
+    put_call_ratio,
+)
 from notify import build_summary, configured_channels, send_all
 from outputs import render_html, render_markdown, write_excel
 
@@ -85,6 +96,15 @@ def parse_args():
         help="不計算連續買超天數（不抓歷史資料，執行較快）",
     )
     parser.add_argument(
+        "--etfs",
+        default=",".join(DEFAULT_ETFS),
+        help="追蹤的高股息 ETF 代號，以逗號分隔（預設 " + ",".join(DEFAULT_ETFS) + "）",
+    )
+    parser.add_argument("--no-etf", action="store_true", help="不產生高股息 ETF 區塊")
+    parser.add_argument("--no-futures", action="store_true", help="不產生期貨選擇權區塊")
+    parser.add_argument("--no-margin", action="store_true", help="不產生融資融券區塊")
+    parser.add_argument("--no-holders", action="store_true", help="不產生千張大戶持股區塊")
+    parser.add_argument(
         "--summary-file",
         help="另存推播摘要文字檔（供之後用 notify.py 推播）",
     )
@@ -99,6 +119,40 @@ def parse_args():
         help="推播摘要到 Telegram / LINE（需設定對應環境變數）",
     )
     return parser.parse_args()
+
+
+def run_optional(label, func):
+    """執行延伸區塊；抓不到資料或解析失敗時只略過該區塊，不影響主報告。"""
+    print(f"讀取{label}資料…")
+    try:
+        return func()
+    except Exception as exc:  # 延伸資料格式未知或權限不足時，不讓整份報告失敗
+        print(f"警告：{label}資料讀取失敗，略過此區塊（{exc}）", file=sys.stderr)
+        return None
+
+
+def futures_section(token, trade_date):
+    futures_rows = finmind.load_futures_institutional(token, trade_date)
+    if not futures_rows:
+        raise finmind.FinMindError("查無台指期法人資料")
+    try:
+        option_rows = finmind.load_option_institutional(token, trade_date)
+    except finmind.FinMindError as exc:
+        print(f"警告：選擇權法人資料讀取失敗（{exc}）", file=sys.stderr)
+        option_rows = []
+    pc_today = put_call_ratio(finmind.load_option_daily(token, trade_date))
+    earlier = sorted({str(r.get("date")) for r in futures_rows if str(r.get("date")) < trade_date.isoformat()})
+    pc_prev = None
+    if earlier:
+        pc_prev = put_call_ratio(finmind.load_option_daily(token, date.fromisoformat(earlier[-1])))
+    return build_futures_section(trade_date, futures_rows, option_rows, pc_today, pc_prev)
+
+
+def holder_sections(token, trade_date, stocks, top):
+    weeks = finmind.find_holding_weeks(token, trade_date)
+    if len(weeks) < 2:
+        raise finmind.FinMindError("找不到最近兩週的集保資料")
+    return build_holder_sections(stocks, weeks, top)
 
 
 def main():
@@ -136,7 +190,8 @@ def main():
 
     try:
         print("讀取上市櫃股票清單…")
-        stock_info = finmind.load_stock_info(token)
+        etf_ids = [] if args.no_etf else [e.strip() for e in args.etfs.split(",") if e.strip()]
+        stock_info = finmind.load_stock_info(token, etf_ids)
 
         print("讀取三大法人買賣資料…")
         if trade_date:
@@ -169,9 +224,28 @@ def main():
     if not args.no_streak:
         apply_streaks(stocks, history)
         streak_window = len(history) + 1
+    # ETF 另外列在高股息 ETF 區塊，不納入個股排行與全市場統計
+    etf_stocks = {k: v for k, v in stocks.items() if k in etf_ids}
+    common = {k: v for k, v in stocks.items() if k not in etf_ids}
     report = build_report(
-        trade_date, stocks, args.top, args.rank_by, streak_window, args.streak_min
+        trade_date, common, args.top, args.rank_by, streak_window, args.streak_min
     )
+
+    common_list = list(common.values())
+    if not args.no_futures:
+        section = run_optional("期貨選擇權", lambda: futures_section(token, trade_date))
+        if section:
+            report.sections.insert(0, section)
+    if etf_ids:
+        report.sections.append(build_etf_section(etf_stocks, etf_ids, streak_window is not None))
+    if not args.no_margin:
+        report.sections += run_optional(
+            "融資融券", lambda: build_margin_sections(common_list, finmind.load_margin(token, trade_date), args.top)
+        ) or []
+    if not args.no_holders:
+        report.sections += run_optional(
+            "集保大戶持股", lambda: holder_sections(token, trade_date, common_list, args.top)
+        ) or []
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

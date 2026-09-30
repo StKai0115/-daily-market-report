@@ -47,7 +47,7 @@ class StockChip:
 @dataclass
 class Column:
     header: str
-    # text / int / signed_int / price / pct / signed_pct / signed_yi
+    # text / int / signed_int / price / pct / signed_pct / signed_yi / signed_float
     kind: str
 
 
@@ -58,6 +58,7 @@ class Section:
     columns: list
     rows: list = field(default_factory=list)
     note: str = ""
+    meta: dict = field(default_factory=dict)  # 推播摘要等用的額外數值
 
     def col(self, header):
         return [c.header for c in self.columns].index(header)

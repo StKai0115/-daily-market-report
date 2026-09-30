@@ -32,6 +32,7 @@ def build_summary(report, top=5, report_url=None):
         lines.append(f"{label} {format_cell(amount, 'signed_yi')} 億（{format_cell(lots, 'signed_int')} 張）")
 
     by_key = {s.key: s for s in report.sections}
+    lines += _futures_lines(by_key.get("futures"))
     for key, (label, lots_header, amount_header) in SUMMARY_SECTIONS.items():
         section = by_key.get(key)
         if section is None:
@@ -70,9 +71,61 @@ def build_summary(report, top=5, report_url=None):
                 f"（累計 {format_cell(row[total_i], 'signed_int')} 張）"
             )
 
+    lines += _etf_lines(by_key.get("etf"), top)
+    lines += _ranked_lines(by_key.get("margin_up"), "融資增加", "融資增減(張)", "signed_int", " 張")
+    lines += _ranked_lines(
+        by_key.get("holder_up"), "千張大戶增加", "週增減(百分點)", "signed_float", " 百分點"
+    )
+
     if report_url:
         lines += ["", f"完整報告：{report_url}"]
     return "\n".join(lines)
+
+
+def _futures_lines(section):
+    if section is None:
+        return []
+    lines = ["", "【期貨選擇權】"]
+    for row in section.rows:
+        label, net, change = row[0], row[1], row[2]
+        text = f"{label} 淨未平倉 {format_cell(net, 'signed_int')} 口"
+        if change is not None:
+            text += f"（日增減 {format_cell(change, 'signed_int')}）"
+        lines.append(text)
+    pc_today, pc_prev = section.meta.get("pc_ratio", (None, None))
+    if pc_today is not None:
+        text = f"P/C Ratio {pc_today:.2f}%"
+        if pc_prev is not None:
+            text += f"（前日 {pc_prev:.2f}%）"
+        lines.append(text)
+    return lines if len(lines) > 2 else []
+
+
+def _etf_lines(section, top):
+    """高股息 ETF 三大法人買超前幾名。"""
+    if section is None:
+        return []
+    total_i = section.col("三大法人(張)")
+    buys = [row for row in section.rows if (row[total_i] or 0) > 0][:top]
+    lines = ["", "【高股息ETF 法人買超】"]
+    if not buys:
+        return lines + ["（無）"]
+    for row in buys:
+        lines.append(f"{row[0]} {row[1]} {format_cell(row[total_i], 'signed_int')} 張")
+    return lines
+
+
+def _ranked_lines(section, label, header, kind, unit, top=3):
+    """排行區塊的前幾名（融資、千張大戶等）。"""
+    if section is None:
+        return []
+    lines = ["", f"【{label}】"]
+    if not section.rows:
+        return lines + ["（無）"]
+    value_i = section.col(header)
+    for row in section.rows[:top]:
+        lines.append(f"{row[0]}. {row[1]} {row[2]} {format_cell(row[value_i], kind)}{unit}")
+    return lines
 
 
 def send_telegram(bot_token, chat_id, text):
