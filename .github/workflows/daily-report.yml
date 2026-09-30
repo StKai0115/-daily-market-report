@@ -4,7 +4,7 @@ on:
   schedule:
     # 週一至週五 18:07～22:07（台灣時間）每小時一次＝ 10:07～14:07 UTC。
     # GitHub 排程在忙碌時可能延遲或被略過，多排幾次當作備援；
-    # 當天報告發布成功後，之後的排程會在「檢查今天是否已完成」步驟直接跳過。
+    # 當天推播成功後，之後的排程會在「檢查今天是否已推播」步驟直接跳過。
     - cron: "7 10-14 * * 1-5"
   workflow_dispatch:
     inputs:
@@ -17,7 +17,7 @@ on:
         type: boolean
         default: true
       publish:
-        description: "發布報告網頁（測試時取消勾選，才不會讓當天晚上的排程以為已完成而跳過）"
+        description: "發布報告網頁"
         type: boolean
         default: true
 
@@ -35,16 +35,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 檢查今天是否已完成
+      - name: 檢查今天是否已推播
         id: check
         if: github.event_name == 'schedule'
         run: |
+          # 以 gh-pages 分支上的 notified/YYYY-MM-DD.txt 判斷當天是否已推播成功；
+          # 只發布網頁、沒有推播的手動測試不會影響晚上的排程
           day=$(TZ=Asia/Taipei date +%F)
-          if git fetch -q --depth 1 origin gh-pages 2>/dev/null && git cat-file -e "FETCH_HEAD:${day}.html" 2>/dev/null; then
-            echo "${day} 的報告已發布，本次排程跳過"
+          if git fetch -q --depth 1 origin gh-pages 2>/dev/null && git cat-file -e "FETCH_HEAD:notified/${day}.txt" 2>/dev/null; then
+            echo "${day} 已推播過，本次排程跳過"
             echo "done=true" >> "$GITHUB_OUTPUT"
           else
-            echo "${day} 的報告尚未發布，開始產生"
+            echo "${day} 尚未推播，開始產生"
           fi
 
       - uses: actions/setup-python@v5
@@ -128,6 +130,7 @@ jobs:
           echo "::warning::網頁尚未上線，請確認已在 Settings → Pages 啟用 gh-pages 分支"
 
       - name: 推播
+        id: notify
         if: >-
           !cancelled() && hashFiles('reports/summary.txt') != '' &&
           (github.event_name == 'schedule' || github.event.inputs.notify == 'true')
@@ -137,6 +140,29 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python notify.py reports/summary.txt
+
+      - name: 記錄已推播
+        if: steps.notify.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 以報告的交易日期記錄，當晚排程據此判斷是否已推播過
+          day=$(ls reports/chip_report_*.html reports/chip_report_*.md 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" gh-pages > /dev/null; then
+            git clone -q --depth 1 --branch gh-pages "$remote" marker
+          else
+            git init -q -b gh-pages marker
+            git -C marker remote add origin "$remote"
+          fi
+          mkdir -p marker/notified
+          echo "推播時間：$(TZ=Asia/Taipei date '+%F %T')（${{ github.event_name }}）" > "marker/notified/${day}.txt"
+          cd marker
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "已推播 ${day}"
+          git push -q origin gh-pages
 
       - name: 上傳報告檔案
         if: always()
