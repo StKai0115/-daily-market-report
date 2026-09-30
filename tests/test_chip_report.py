@@ -184,6 +184,18 @@ class ReportTest(unittest.TestCase):
         self.report = build_report(day, stocks, top=20)
         self.by_key = {s.key: s for s in self.report.sections}
 
+    def test_specific_industry_preferred(self):
+        rows = [
+            {"stock_id": "2308", "stock_name": "台達電", "type": "twse", "industry_category": "電子工業"},
+            {"stock_id": "2308", "stock_name": "台達電", "type": "twse", "industry_category": "電子零組件業"},
+            {"stock_id": "2317", "stock_name": "鴻海", "type": "twse", "industry_category": "其他電子業"},
+            {"stock_id": "2317", "stock_name": "鴻海", "type": "twse", "industry_category": "電子工業"},
+        ]
+        with mock.patch.object(finmind, "fetch_dataset", return_value=rows):
+            info = finmind.load_stock_info("t")
+        self.assertEqual(info["2308"]["industry"], "電子零組件業")
+        self.assertEqual(info["2317"]["industry"], "其他電子業")
+
     def test_etf_excluded_and_markets(self):
         self.assertNotIn("0050", self.stocks)
         self.assertEqual(self.stocks["6488"].market, "上櫃")
@@ -342,6 +354,17 @@ class ExtrasTest(unittest.TestCase):
         self.assertEqual([(r[1], r[5]) for r in short.rows], [("2317", 500)])
         self.assertAlmostEqual(short.rows[0][short.col("券資比")], 5.0)
         self.assertIn("融資 +0 張、融券 +400 張", up.note)
+
+    def test_holder_sections_skip_abnormal_rows(self):
+        weeks = [
+            (date(2026, 9, 25), HOLDING["2026-09-25"] + _holding("2317", 100.0, 1)),
+            (date(2026, 9, 18), HOLDING["2026-09-18"]),
+        ]
+        # 2317 本週出現股東人數 1 人的異常資料，應被排除
+        weeks[0] = (weeks[0][0], [r for r in weeks[0][1]
+                                  if not (r["stock_id"] == "2317" and r["people"] == 500_000)])
+        up, down = extras.build_holder_sections(list(self.stocks.values()), weeks, 20)
+        self.assertEqual([r[1] for r in up.rows + down.rows], ["2330"])
 
     def test_holder_sections(self):
         weeks = finmind.find_holding_weeks("t", date(2026, 9, 29))
