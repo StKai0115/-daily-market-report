@@ -13,7 +13,11 @@ on:
         required: false
         default: ""
       notify:
-        description: "推播到 Telegram / LINE"
+        description: "推播到 Telegram / LINE（測試時取消勾選，不消耗推播額度）"
+        type: boolean
+        default: true
+      publish:
+        description: "發布報告網頁（測試時取消勾選，才不會讓當天晚上的排程以為已完成而跳過）"
         type: boolean
         default: true
 
@@ -73,7 +77,9 @@ jobs:
 
       - name: 發布到 GitHub Pages
         id: pages
-        if: hashFiles('reports/*.html') != ''
+        if: >-
+          hashFiles('reports/*.html') != '' &&
+          (github.event_name == 'schedule' || github.event.inputs.publish == 'true')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
