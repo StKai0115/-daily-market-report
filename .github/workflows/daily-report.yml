@@ -61,6 +61,8 @@ jobs:
         if: steps.check.outputs.done != 'true'
         env:
           FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
           INPUT_DATE: ${{ github.event.inputs.date }}
         run: |
           # GitHub Pages 網址，推播摘要會附上完整報告連結

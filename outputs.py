@@ -187,6 +187,7 @@ SHEET_NAMES = {
     "industry": "產業別",
     "etf": "高股息ETF",
     "futures": "期貨選擇權",
+    "events": "美股重大事件",
     "margin_up": "融資增加",
     "margin_down": "融資減少",
     "short_up": "融券增加",

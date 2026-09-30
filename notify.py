@@ -6,6 +6,7 @@ from pathlib import Path
 
 import requests
 
+from events import event_lines
 from outputs import format_cell
 
 TIMEOUT = 30
@@ -36,6 +37,7 @@ def build_summary(report, top=5, report_url=None):
 
     by_key = {s.key: s for s in report.sections}
     lines += _futures_lines(by_key.get("futures"))
+    lines += event_lines(by_key.get("events"))
     for key, (label, lots_header, amount_header) in SUMMARY_SECTIONS.items():
         section = by_key.get(key)
         if section is None:

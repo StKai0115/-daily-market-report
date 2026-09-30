@@ -2,13 +2,14 @@ import os
 import sys
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import chip_report  # noqa: E402
+import events  # noqa: E402
 import extras  # noqa: E402
 import finmind  # noqa: E402
 import notify  # noqa: E402
@@ -47,6 +48,25 @@ PRICES = [
     {"stock_id": "2317", "close": 200.0, "spread": -4.0, "Trading_Volume": 20_000_000},
     # 6488 無股價，測試缺值處理
 ]
+
+
+_patchers = []
+
+
+def setUpModule():
+    # 測試不連外網：行事曆的 HTTP 請求一律失敗（FOMC 會改用內建日程），且不帶 API 金鑰
+    def offline(*args, **kwargs):
+        raise events.requests.ConnectionError("offline")
+
+    _patchers.append(mock.patch.object(events.requests, "get", side_effect=offline))
+    _patchers.append(mock.patch.dict(os.environ, {"FRED_API_KEY": "", "ALPHAVANTAGE_API_KEY": ""}))
+    for p in _patchers:
+        p.start()
+
+
+def tearDownModule():
+    for p in reversed(_patchers):
+        p.stop()
 
 
 def _inst(stock_id, name, net):
@@ -395,6 +415,125 @@ class WeeklyTest(unittest.TestCase):
         self.assertIn("weekly_report_2026-09-24.md",
                       run(["--date", "2026-09-24", "--weekly"], date(2026, 9, 24)))
         self.assertEqual(run(["--no-weekly"], date(2026, 9, 29)), ["chip_report_2026-09-25.md"])
+
+
+TW = events.TAIPEI
+
+
+class EventsTest(unittest.TestCase):
+    def test_rule_dates(self):
+        self.assertEqual(events.nth_weekday(2026, 10, 4, 3), date(2026, 10, 16))
+        self.assertEqual(events.nth_weekday(2026, 5, 0, -1), date(2026, 5, 25))
+        self.assertEqual(events.easter(2026), date(2026, 4, 5))
+        h = events.us_market_holidays(2026)
+        self.assertEqual(h[date(2026, 4, 3)], "耶穌受難日")
+        self.assertEqual(h[date(2026, 11, 26)], "感恩節")
+        self.assertEqual(h[date(2026, 7, 3)], "獨立紀念日")  # 7/4 週六，提前到週五
+        self.assertNotIn(date(2021, 12, 31), events.us_market_holidays(2022))  # 元旦週六不補假
+        closes = events.us_early_closes(2026)
+        self.assertEqual(set(closes), {date(2026, 11, 27), date(2026, 12, 24)})  # 7/3 已休市
+
+    def test_rule_events(self):
+        found = {(e.day, e.title) for e in events.rule_events(date(2026, 10, 1), date(2026, 12, 31))}
+        self.assertIn((date(2026, 10, 16), "美股選擇權月到期"), found)
+        self.assertIn((date(2026, 12, 18), "美股四巫日（季度選擇權、期貨到期）"), found)
+        self.assertIn((date(2026, 10, 21), "台指期／台指選擇權月結算"), found)
+        # 2025 年四月第三個週五是耶穌受難日，選擇權改在週四到期
+        april = [e.day for e in events.rule_events(date(2025, 4, 1), date(2025, 4, 30))
+                 if e.title == "美股選擇權月到期"]
+        self.assertEqual(april, [date(2025, 4, 17)])
+
+    def test_timezone_conversion(self):
+        cpi_summer = events._timed_event(date(2026, 10, 14), events.FRED_RELEASE_TIME, "CPI", 3)
+        cpi_winter = events._timed_event(date(2026, 12, 10), events.FRED_RELEASE_TIME, "CPI", 3)
+        self.assertEqual((cpi_summer.day, cpi_summer.time_text), (date(2026, 10, 14), "20:30"))
+        self.assertEqual((cpi_winter.day, cpi_winter.time_text), (date(2026, 12, 10), "21:30"))
+        fomc = events.fomc_events(date(2026, 10, 1), date(2026, 12, 31), fetch=False)
+        self.assertEqual([(e.day, e.time_text) for e in fomc],
+                         [(date(2026, 10, 29), "02:00"), (date(2026, 12, 10), "03:00")])
+        self.assertIn("點陣圖", fomc[1].title)
+        self.assertEqual(fomc[0].note, "內建日程，以 Fed 官網為準")
+
+    def test_parse_fomc_calendar(self):
+        html = """<h4>2027 FOMC Meetings</h4>
+        <div class="fomc-meeting__month col-xs-5"><strong>January</strong></div>
+        <div class="fomc-meeting__date col-xs-4">26-27</div>
+        <div class="fomc-meeting__month col-xs-5"><strong>Apr/May</strong></div>
+        <div class="fomc-meeting__date col-xs-4">30-1*</div>
+        <div class="fomc-meeting__month col-xs-5"><strong>August</strong></div>
+        <div class="fomc-meeting__date col-xs-4">16 (notation vote)</div>
+        <h4>2026 FOMC Meetings</h4>
+        <div class="fomc-meeting__month col-xs-5"><strong>December</strong></div>
+        <div class="fomc-meeting__date col-xs-4">8-9*</div>"""
+        self.assertEqual(events.parse_fomc_calendar(html), [
+            (date(2027, 1, 27), False), (date(2027, 5, 1), True), (date(2026, 12, 9), True),
+        ])
+
+    def test_parse_earnings_csv(self):
+        text = (
+            "symbol,name,reportDate,fiscalDateEnding,estimate,currency,timeOfTheDay\n"
+            "NVDA,NVIDIA,2026-11-18,2026-10-31,1.2,USD,post-market\n"
+            "JPM,JPMorgan,2026-10-13,2026-09-30,4.1,USD,pre-market\n"
+            "XYZ,Other,2026-10-13,2026-09-30,1,USD,post-market\n"
+        )
+        result = {e.title: e for e in events.parse_earnings_csv(text)}
+        self.assertEqual(set(result), {"NVDA 輝達 財報", "JPM 摩根大通 財報"})
+        nvda = result["NVDA 輝達 財報"]
+        self.assertEqual((nvda.day, nvda.time_text, nvda.stars), (date(2026, 11, 19), "清晨", 3))
+        self.assertEqual(result["JPM 摩根大通 財報"].time_text, "晚上")
+        no_timing = events.parse_earnings_csv(
+            "symbol,name,reportDate,fiscalDateEnding,estimate,currency\nAMD,AMD,2026-10-27,,,USD\n")
+        self.assertEqual((no_timing[0].day, no_timing[0].time_text), (date(2026, 10, 27), ""))
+
+    def test_fred_events(self):
+        payload = {"release_dates": [
+            {"release_id": 10, "release_name": "Consumer Price Index", "date": "2026-10-14"},
+            {"release_id": 50, "release_name": "Employment Situation", "date": "2026-10-02"},
+            {"release_id": 999, "release_name": "Other", "date": "2026-10-14"},
+        ]}
+        response = mock.Mock(json=mock.Mock(return_value=payload), raise_for_status=mock.Mock())
+        with mock.patch.object(events.requests, "get", return_value=response) as get:
+            result = events.fred_events("k", date(2026, 10, 1), date(2026, 10, 15))
+        self.assertEqual(get.call_args.kwargs["params"]["include_release_dates_with_no_data"], "true")
+        self.assertEqual([(e.day, e.time_text, e.title) for e in result], [
+            (date(2026, 10, 14), "20:30", "CPI 消費者物價指數"),
+            (date(2026, 10, 2), "20:30", "非農就業報告"),
+        ])
+
+    def test_collect_events_window_and_failures(self):
+        now = datetime(2026, 10, 14, 21, 0, tzinfo=TW)
+        cpi_past = events._timed_event(date(2026, 10, 14), events.FRED_RELEASE_TIME, "CPI", 3)
+        ppi = events._timed_event(date(2026, 10, 15), events.FRED_RELEASE_TIME, "PPI", 2)
+        far = events._timed_event(date(2026, 10, 30), events.FRED_RELEASE_TIME, "GDP", 2)
+        warnings = []
+        with mock.patch.dict(os.environ, {"FRED_API_KEY": "k", "ALPHAVANTAGE_API_KEY": "a"}), \
+                mock.patch.object(events, "fred_events", return_value=[cpi_past, ppi, far]), \
+                mock.patch.object(events, "earnings_events", side_effect=ValueError("額度用完")):
+            result = events.collect_events(now, warn=warnings.append)
+        titles = [e.title for e in result]
+        self.assertNotIn("CPI", titles)  # 已經公布
+        self.assertNotIn("GDP", titles)  # 超過 7 天
+        self.assertIn("PPI", titles)
+        self.assertIn("美股選擇權月到期", titles)  # 10/16
+        self.assertIn("台指期／台指選擇權月結算", titles)  # 10/21
+        self.assertEqual([e.day for e in result], sorted(e.day for e in result))
+        self.assertTrue(any("財報資料讀取失敗" in w for w in warnings))
+
+    def test_missing_keys_warn(self):
+        warnings = []
+        events.collect_events(datetime(2026, 10, 14, 18, 0, tzinfo=TW), warn=warnings.append)
+        self.assertTrue(any("FRED_API_KEY" in w for w in warnings))
+        self.assertTrue(any("ALPHAVANTAGE_API_KEY" in w for w in warnings))
+
+    def test_section_and_summary_lines(self):
+        ev = [events._timed_event(date(2026, 10, 15), events.FRED_RELEASE_TIME, "PPI 生產者物價指數", 2),
+              events.Event(date(2026, 10, 16), "", "美股選擇權月到期", 2)]
+        lines = events.event_lines(events.build_events_section(ev))
+        self.assertEqual(lines[1:], [
+            "【未來 7 天重大事件】",
+            "10/15（四） 20:30 PPI 生產者物價指數 ⭐⭐",
+            "10/16（五） 美股選擇權月到期 ⭐⭐",
+        ])
 
 
 class PagesTest(unittest.TestCase):

@@ -16,6 +16,7 @@
     python chip_report.py --etfs 0056,00878  # 自訂追蹤的高股息 ETF
     python chip_report.py --no-margin        # 不產生融資融券區塊（另有 --no-etf、--no-futures、--no-holders）
     python chip_report.py --weekly           # 非週五也產生週報（週五會自動產生；--no-weekly 可關閉）
+    python chip_report.py --no-events        # 不產生美股重大事件行事曆
 """
 
 import argparse
@@ -26,6 +27,7 @@ from pathlib import Path
 
 import finmind
 from analysis import apply_streaks, build_report, build_stocks
+from events import build_events_section, collect_events
 from extras import (
     DEFAULT_ETFS,
     build_etf_section,
@@ -106,6 +108,7 @@ def parse_args():
     parser.add_argument("--no-futures", action="store_true", help="不產生期貨選擇權區塊")
     parser.add_argument("--no-margin", action="store_true", help="不產生融資融券區塊")
     parser.add_argument("--no-holders", action="store_true", help="不產生千張大戶持股區塊")
+    parser.add_argument("--no-events", action="store_true", help="不產生未來 7 天美股重大事件行事曆")
     parser.add_argument("--weekly", action="store_true", help="非週五也產生本週週報")
     parser.add_argument("--no-weekly", action="store_true", help="週五不產生週報")
     parser.add_argument(
@@ -263,6 +266,16 @@ def main():
         section = run_optional("期貨選擇權", lambda: futures_section(token, trade_date))
         if section:
             report.sections.insert(0, section)
+    if not args.no_events:
+        def events_section():
+            warn = lambda msg: print(msg, file=sys.stderr)  # noqa: E731
+            return build_events_section(collect_events(datetime.now(TAIPEI_TZ), warn=warn))
+
+        section = run_optional("美股重大事件", events_section)
+        if section:
+            # 放在期貨選擇權之後、個股排行之前
+            index = 1 if report.sections and report.sections[0].key == "futures" else 0
+            report.sections.insert(index, section)
     if etf_ids:
         report.sections.append(build_etf_section(etf_stocks, etf_ids, streak_window is not None))
     if not args.no_margin:
