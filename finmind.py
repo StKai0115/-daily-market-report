@@ -13,6 +13,9 @@ MARKET_LABELS = {"twse": "上市", "tpex": "上櫃"}
 # 普通股代號：4 碼數字、首碼非 0（排除 ETF、權證、特別股等）
 COMMON_STOCK_PATTERN = re.compile(r"^[1-9]\d{3}$")
 
+# 籠統的產業分類；同一檔股票有更精確的分類時優先使用後者
+GENERIC_INDUSTRIES = {"電子工業", "其他電子類"}
+
 
 class FinMindError(RuntimeError):
     pass
@@ -58,15 +61,14 @@ def load_stock_info(token, extra_ids=()):
             continue
         if not COMMON_STOCK_PATTERN.match(stock_id):
             continue
-        # 同一檔股票可能因多個產業分類重複出現，保留第一筆即可
-        info.setdefault(
+        # 同一檔股票可能因多個產業分類重複出現：保留第一筆，但以較精確的分類取代籠統分類
+        industry = row.get("industry_category") or "其他"
+        entry = info.setdefault(
             stock_id,
-            {
-                "name": row.get("stock_name", ""),
-                "market": MARKET_LABELS[market],
-                "industry": row.get("industry_category") or "其他",
-            },
+            {"name": row.get("stock_name", ""), "market": MARKET_LABELS[market], "industry": industry},
         )
+        if entry["industry"] in GENERIC_INDUSTRIES and industry not in GENERIC_INDUSTRIES:
+            entry["industry"] = industry
     return info
 
 

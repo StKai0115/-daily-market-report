@@ -118,7 +118,7 @@ def parse_args():
     parser.add_argument(
         "--today-only",
         action="store_true",
-        help="只處理今天（台灣時間）的資料；今天沒有資料時不產生報告也不推播",
+        help="只處理今天（台灣時間，或 --date 指定日期）的資料；沒有資料時不產生報告也不推播，並正常結束",
     )
     parser.add_argument(
         "--notify",
@@ -221,7 +221,7 @@ def main():
         print("讀取三大法人買賣資料…")
         if trade_date:
             inst_rows = finmind.load_institutional(token, trade_date)
-            if not inst_rows and args.today_only and not args.date:
+            if not inst_rows and args.today_only:
                 print(f"{trade_date} 沒有三大法人資料（休市或尚未更新），本次不產生報告。")
                 return 0
             if not inst_rows:

@@ -241,6 +241,9 @@ def holder_stats(rows):
     return {k: tuple(v) for k, v in stats.items()}
 
 
+MIN_HOLDER_PEOPLE = 10
+
+
 def build_holder_sections(stocks, weeks, top):
     """千張大戶持股比例週增加、週減少排行；weeks 為 [(日期, rows), (前一週日期, rows)]。"""
     (day, rows), (prev_day, prev_rows) = weeks[0], weeks[1]
@@ -251,6 +254,9 @@ def build_holder_sections(stocks, weeks, top):
             continue
         pct, people = now[s.stock_id]
         prev_pct, prev_people = prev[s.stock_id]
+        # 集保資料偶有異常筆數（例如股東人數只有 1 人、大戶持股 100%），排除以免佔據排行
+        if (people or 0) < MIN_HOLDER_PEOPLE or (prev_people or 0) < MIN_HOLDER_PEOPLE:
+            continue
         people_chg = people - prev_people if people is not None and prev_people is not None else None
         items.append((s, pct, pct - prev_pct, people, people_chg))
 

@@ -297,11 +297,12 @@ LINE 官方帳號免費方案每月有推播則數上限，個人每日使用一
 
 設定完成後，GitHub 會在**週一至週五傍晚自動產生報告並推播**，電腦關機也不影響。
 
-- 排程在 **18:07～22:07（台灣時間）每小時執行一次**。GitHub 的排程在系統忙碌時可能延遲或被略過，所以多排幾次當作備援
-- 當天**推播成功**後，之後的排程會自動跳過，**每天只會推播一次**（記錄在 gh-pages 分支的 `notified/日期.txt`）
-- 排程執行時會自動加上 `--today-only`：FinMind 資料還沒更新時，會等下一個小時再試；國定假日則整晚都會跳過，不會推播舊資料
-- 通常 18:00～19:00 之間就會收到推播（視 GitHub 排程延遲而定）
-- 排程設定在 `.github/workflows/daily-report.yml`，要改時間請修改 `cron` 那一行（使用 UTC 時間，台灣時間減 8 小時）
+- **主要觸發**：外部定時服務 cron-job.org，每晚準時觸發（設定方式見下方第 5 步）
+- **備援觸發**：GitHub 內建排程，18:07～22:07（台灣時間）每小時一次。GitHub 內建排程在系統忙碌時常延遲數小時或被略過，只當作備援
+- 當天**推播成功**後，之後的觸發會自動跳過，**每天只會推播一次**（記錄在 gh-pages 分支的 `notified/日期.txt`）
+- 自動執行只處理當天資料：FinMind 資料還沒更新時，等下一次觸發再試；國定假日整晚都會跳過，不會推播舊資料
+- 觸發延遲到隔天凌晨（台灣時間中午以前）時，會視為前一個交易日的推播，仍會送出
+- 內建排程設定在 `.github/workflows/daily-report.yml` 的 `cron` 那一行（使用 UTC 時間，台灣時間減 8 小時）
 
 ### 1. 把 token 存到 GitHub Secrets
 
@@ -365,6 +366,54 @@ Secrets 會加密保存，不會出現在程式碼或執行記錄中。
 
 每次執行產生的報告檔（含 Excel）會保存 30 天：進入「Actions」→ 點選某次執行 → 頁面下方「**Artifacts**」即可下載 ZIP 檔。
 
+### 5. 設定外部定時觸發（cron-job.org，建議）
+
+GitHub 內建排程不可靠，改由免費的 cron-job.org 每晚準時通知 GitHub 執行。
+
+**(1) 建立 GitHub Token（只允許觸發這個專案的 Actions）**
+
+1. GitHub 右上角頭像 →「**Settings**」→ 左側最下方「**Developer settings**」
+2. 「**Personal access tokens**」→「**Fine-grained tokens**」→「**Generate new token**」
+3. 填寫：
+   - **Token name**：`cron-job daily report`
+   - **Expiration**：選最長的期限（到期前 GitHub 會寄信提醒，屆時重新產生並更新到 cron-job.org）
+   - **Repository access**：選「**Only select repositories**」→ 勾選 `-daily-market-report`
+   - **Permissions** →「Repository permissions」→「**Actions**」改成「**Read and write**」（其他維持預設）
+4. 按「Generate token」，複製 `github_pat_` 開頭的字串（只會顯示一次）
+
+**(2) 在 cron-job.org 建立定時工作**
+
+1. 到 <https://cron-job.org> 註冊並登入
+2. 右上角頭像 →「Settings」→ **Timezone** 設為 `Asia/Taipei`，存檔
+3. 「Cronjobs」→「**Create cronjob**」，填寫：
+   - **Title**：`台股籌碼推播`
+   - **URL**：`https://api.github.com/repos/StKai0115/-daily-market-report/actions/workflows/daily-report.yml/dispatches`
+   - **Execution schedule**：選「Custom」，設定
+     - Days of week：**週一～週五**
+     - Hours：**18、19、20、21**
+     - Minutes：**15**
+4. 切換到「**Advanced**」分頁：
+   - **Request method**：`POST`
+   - **Headers**（按「Add header」逐一新增）：
+
+     | Key | Value |
+     |---|---|
+     | `Authorization` | `Bearer 貼上剛才的 github_pat_ token` |
+     | `Accept` | `application/vnd.github+json` |
+     | `X-GitHub-Api-Version` | `2022-11-28` |
+     | `Content-Type` | `application/json` |
+
+   - **Request body**：
+     ```json
+     {"ref":"main","inputs":{"auto":"true"}}
+     ```
+5. 按「**Test run**」：回應狀態為 **204** 就代表成功，GitHub「Actions」頁面會出現一筆新的執行
+6. 按「Create」儲存
+
+每晚 18:15 會先觸發一次；資料已更新就推播，之後 19:15、20:15、21:15 的觸發會自動跳過。
+
+Test run 會真的執行一次自動模式：如果當天已推播過會直接跳過；還沒推播且資料已更新，則會推播當天報告。
+
 ### 注意事項
 
 - **執行失敗會收到 Email**：例如 token 過期、推播失敗，GitHub 會寄信通知帳號信箱
@@ -374,7 +423,7 @@ Secrets 會加密保存，不會出現在程式碼或執行記錄中。
 
 ## 常見問題
 
-- **晚上都沒收到推播**：到「Actions」頁面看當天有沒有「schedule」觸發的執行紀錄。如果完全沒有，代表 GitHub 當天的排程被略過了，可以按「Run workflow」手動補跑一次
+- **晚上都沒收到推播**：到「Actions」頁面看當天有沒有執行紀錄。完全沒有的話，檢查 cron-job.org 的執行歷史（「Cronjobs」→ 點該工作 →「History」）是否為 204；401 代表 GitHub Token 錯誤或過期。也可以按「Run workflow」手動補跑一次
 - **推播的報告連結打不開（404）**：確認已完成「設定報告網頁」的步驟 3；Pages 剛啟用或剛更新時需等 1～2 分鐘
 
 - **顯示「找不到環境變數 FINMIND_TOKEN」**：用 `setx` 設定後需關閉並重新開啟命令視窗。
