@@ -70,6 +70,7 @@ class Report:
     overview: Section
     sections: list
     all_stocks: Section
+    title: str = ""  # 空白時使用「台股每日籌碼報告 YYYY-MM-DD」
 
 
 def to_lots(shares):
@@ -346,6 +347,10 @@ def build_all_stocks(stocks, with_streak=False):
             row += [s.streak.get("foreign", 0), s.streak.get("trust", 0)]
         section.rows.append(row)
     return section
+
+
+def report_title(report):
+    return report.title or f"台股每日籌碼報告 {report.trade_date.isoformat()}"
 
 
 def build_report(trade_date, stocks, top, rank_by="lots", streak_window=None, streak_min=3):

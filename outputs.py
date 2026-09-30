@@ -2,6 +2,8 @@
 
 import html
 
+from analysis import report_title
+
 SUBTITLE = "資料來源：FinMind（上市＋上櫃普通股；外資含外資自營商）"
 
 
@@ -52,7 +54,7 @@ def section_to_markdown(section):
 
 
 def render_markdown(report):
-    parts = [f"# 台股每日籌碼報告 {report.trade_date.isoformat()}", "", SUBTITLE, ""]
+    parts = [f"# {report_title(report)}", "", SUBTITLE, ""]
     parts += [section_to_markdown(s) for s in _report_sections(report)]
     return "\n".join(parts)
 
@@ -134,7 +136,7 @@ def section_to_html(section):
 
 
 def render_html(report):
-    day = report.trade_date.isoformat()
+    title = html.escape(report_title(report))
     sections = _report_sections(report)
     nav = "".join(
         f'<a href="#{s.key}">{html.escape(s.title.split("（")[0])}</a>' for s in sections
@@ -145,12 +147,12 @@ def render_html(report):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>台股籌碼報告 {day}</title>
+<title>{title}</title>
 <style>{HTML_STYLE}</style>
 </head>
 <body>
 <main>
-<h1>台股每日籌碼報告 {day}</h1>
+<h1>{title}</h1>
 <p class="subtitle">{html.escape(SUBTITLE)}｜紅色為買超／上漲，綠色為賣超／下跌</p>
 <nav>{nav}</nav>
 {body}

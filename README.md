@@ -22,6 +22,22 @@
 
 每個排行包含以下欄位：代號、名稱、**產業**、市場、**收盤價**、**漲跌幅**、買賣超(張)、**買賣超金額(億)**、**佔成交量比例**、**連買／連賣天數**。
 
+### 每週五週報
+
+每週五會**自動多產生一份週報**，彙整本週（週一到週五）的法人動向：
+
+| 區塊 | 說明 |
+|---|---|
+| 本週三大法人 | 外資、投信、自營商整週合計買賣超 |
+| 本週每日法人買賣超 | 每天三大法人的買賣超金額，看一週內的變化 |
+| 外資／投信週買超、週賣超排行 | 整週累計張數、估計金額、買（賣）超天數、週漲跌幅 |
+| 產業別本週資金流向 | 各產業外資＋投信整週淨買賣金額 |
+
+- 週報的推播會和週五日報放在**同一次推播**（LINE 會收到兩個對話框），依 LINE 的計算方式只算一則推播額度
+- 週報使用計算連買天數時已抓取的本週資料，只多查一次上週最後一個交易日的股價（用來算週漲跌幅）
+- 週五遇到休市時，該週不會產生週報；可以隔週一手動執行 `python chip_report.py --date 週四日期 --weekly` 補產生
+- 金額是以最新收盤價估算，非實際成交金額
+
 ### 延伸指標說明
 
 - **淨未平倉**＝多方未平倉口數－空方未平倉口數；外資台指期淨未平倉常被當成大盤多空的參考，正數偏多、負數偏空
@@ -163,6 +179,9 @@ python chip_report.py --no-streak
 :: 自訂追蹤的高股息 ETF
 python chip_report.py --etfs 0056,00878,00919
 
+:: 非週五也產生本週週報（週五會自動產生）；--no-weekly 則是週五不產生
+python chip_report.py --weekly
+
 :: 關閉不需要的延伸區塊（可任意組合）
 python chip_report.py --no-etf --no-futures --no-margin --no-holders
 
@@ -181,6 +200,7 @@ python chip_report.py --output-dir D:\籌碼報告
 | `chip_report_YYYY-MM-DD.html` | 用瀏覽器開啟，買超／上漲為紅色、賣超／下跌為綠色，手機也好閱讀 |
 | `chip_report_YYYY-MM-DD.xlsx` | Excel 檔，每個區塊一個工作表，另有「全部個股」工作表可自行篩選、排序 |
 | `chip_report_YYYY-MM-DD.md` | 純文字 Markdown 版本 |
+| `weekly_report_YYYY-MM-DD.*` | 週五才有的週報，同樣有 HTML、Excel、Markdown 三種格式 |
 
 ## 推播設定（選用）
 
@@ -268,6 +288,7 @@ Secrets 會加密保存，不會出現在程式碼或執行記錄中。
 每次雲端執行後，HTML 報告會自動發布成網頁，推播訊息最後會附上連結，手機點開就能看完整報告：
 
 - 當日報告：`https://<你的GitHub帳號小寫>.github.io/-daily-market-report/YYYY-MM-DD.html`
+- 週報（週五）：`https://<你的GitHub帳號小寫>.github.io/-daily-market-report/weekly-YYYY-MM-DD.html`
 - 所有報告列表：`https://<你的GitHub帳號小寫>.github.io/-daily-market-report/`
 
 ⚠️ GitHub 免費方案只有**公開（public）專案**能使用 Pages，而且 **Pages 網頁任何人都能瀏覽**（報告內容只有公開的市場資料）。Token 都存在 Secrets 中，專案公開也不會外洩。

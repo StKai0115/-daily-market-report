@@ -15,6 +15,7 @@
     python chip_report.py --no-streak        # 不計算連續買超天數（少抓歷史資料）
     python chip_report.py --etfs 0056,00878  # 自訂追蹤的高股息 ETF
     python chip_report.py --no-margin        # 不產生融資融券區塊（另有 --no-etf、--no-futures、--no-holders）
+    python chip_report.py --weekly           # 非週五也產生週報（週五會自動產生；--no-weekly 可關閉）
 """
 
 import argparse
@@ -33,8 +34,9 @@ from extras import (
     build_margin_sections,
     put_call_ratio,
 )
-from notify import build_summary, configured_channels, send_all
+from notify import MESSAGE_SEPARATOR, build_summary, configured_channels, send_all
 from outputs import render_html, render_markdown, write_excel
+from weekly import build_weekly_report, build_weekly_summary, previous_trading_day, week_days
 
 FORMATS = ("md", "html", "xlsx")
 
@@ -104,6 +106,8 @@ def parse_args():
     parser.add_argument("--no-futures", action="store_true", help="不產生期貨選擇權區塊")
     parser.add_argument("--no-margin", action="store_true", help="不產生融資融券區塊")
     parser.add_argument("--no-holders", action="store_true", help="不產生千張大戶持股區塊")
+    parser.add_argument("--weekly", action="store_true", help="非週五也產生本週週報")
+    parser.add_argument("--no-weekly", action="store_true", help="週五不產生週報")
     parser.add_argument(
         "--summary-file",
         help="另存推播摘要文字檔（供之後用 notify.py 推播）",
@@ -153,6 +157,24 @@ def holder_sections(token, trade_date, stocks, top):
     if len(weeks) < 2:
         raise finmind.FinMindError("找不到最近兩週的集保資料")
     return build_holder_sections(stocks, weeks, top)
+
+
+def write_outputs(report, base, formats):
+    """依指定格式輸出報告，回傳已儲存的檔案路徑；Excel 開啟中無法寫入時丟出 PermissionError。"""
+    saved = []
+    if "md" in formats:
+        path = base.with_suffix(".md")
+        path.write_text(render_markdown(report), encoding="utf-8")
+        saved.append(path)
+    if "html" in formats:
+        path = base.with_suffix(".html")
+        path.write_text(render_html(report), encoding="utf-8")
+        saved.append(path)
+    if "xlsx" in formats:
+        path = base.with_suffix(".xlsx")
+        write_excel(report, path)
+        saved.append(path)
+    return saved
 
 
 def main():
@@ -208,10 +230,15 @@ def main():
         print("讀取股價資料…")
         prices = finmind.load_prices(token, trade_date)
 
+        # 週五自動產生週報（週報需要本週每日資料與上週最後一個交易日）
+        weekly = not args.no_weekly and (args.weekly or trade_date.weekday() == 4)
+        history_days = 0 if args.no_streak else args.streak_days - 1
+        if weekly:
+            history_days = max(history_days, 5)
         history = []
-        if not args.no_streak:
-            print(f"讀取前 {args.streak_days - 1} 個交易日的法人資料（計算連續買超天數）…")
-            history = finmind.load_history(token, trade_date, args.streak_days - 1)
+        if history_days:
+            print(f"讀取前 {history_days} 個交易日的法人資料（計算連續買超天數與週報）…")
+            history = finmind.load_history(token, trade_date, history_days)
     except finmind.FinMindError as exc:
         print(f"錯誤：{exc}", file=sys.stderr)
         return 1
@@ -247,30 +274,31 @@ def main():
             "集保大戶持股", lambda: holder_sections(token, trade_date, common_list, args.top)
         ) or []
 
+    weekly_report = None
+    if weekly:
+        prev_day = previous_trading_day(trade_date, history)
+        prev_prices = None
+        if prev_day:
+            prev_prices = run_optional("上週收盤價", lambda: finmind.load_prices(token, prev_day))
+        weekly_report = build_weekly_report(
+            trade_date, week_days(trade_date, inst_rows, history), common, args.top, prev_prices
+        )
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    base = output_dir / f"chip_report_{trade_date.isoformat()}"
-
-    markdown = render_markdown(report)
-    print()
-    print(markdown)
+    day = trade_date.isoformat()
+    outputs = [(report, output_dir / f"chip_report_{day}")]
+    if weekly_report:
+        outputs.append((weekly_report, output_dir / f"weekly_report_{day}"))
 
     saved = []
-    if "md" in args.formats:
-        path = base.with_suffix(".md")
-        path.write_text(markdown, encoding="utf-8")
-        saved.append(path)
-    if "html" in args.formats:
-        path = base.with_suffix(".html")
-        path.write_text(render_html(report), encoding="utf-8")
-        saved.append(path)
-    if "xlsx" in args.formats:
-        path = base.with_suffix(".xlsx")
+    for rpt, base in outputs:
+        print()
+        print(render_markdown(rpt))
         try:
-            write_excel(report, path)
-            saved.append(path)
+            saved += write_outputs(rpt, base, args.formats)
         except PermissionError:
-            print(f"錯誤：無法寫入 {path}，請先關閉已開啟的 Excel 檔案。", file=sys.stderr)
+            print(f"錯誤：無法寫入 {base}.xlsx，請先關閉已開啟的 Excel 檔案。", file=sys.stderr)
             return 1
 
     for path in saved:
@@ -278,8 +306,12 @@ def main():
 
     # 設定 REPORT_BASE_URL（例如 GitHub Pages 網址）時，摘要會附上完整報告連結
     base_url = os.environ.get("REPORT_BASE_URL", "").strip().rstrip("/")
-    report_url = f"{base_url}/{trade_date.isoformat()}.html" if base_url else None
+    report_url = f"{base_url}/{day}.html" if base_url else None
     summary = build_summary(report, report_url=report_url)
+    if weekly_report:
+        weekly_url = f"{base_url}/weekly-{day}.html" if base_url else None
+        # 週報作為同一次推播的第二則訊息，不另外消耗推播額度
+        summary += MESSAGE_SEPARATOR + build_weekly_summary(weekly_report, report_url=weekly_url)
     if args.summary_file:
         Path(args.summary_file).write_text(summary, encoding="utf-8")
         print(f"推播摘要已儲存：{args.summary_file}")

@@ -93,6 +93,12 @@ jobs:
           for f in reports/chip_report_*.html; do
             day=$(python pages.py site "$f" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
           done
+          # 週五另有週報，發布為 weekly-YYYY-MM-DD.html
+          for f in reports/weekly_report_*.html; do
+            if [ -e "$f" ]; then
+              python pages.py site "$f"
+            fi
+          done
           echo "url=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/${day}.html" >> "$GITHUB_OUTPUT"
           cd site
           git add -A
