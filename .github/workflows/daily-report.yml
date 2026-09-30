@@ -2,9 +2,10 @@ name: 台股每日籌碼報告
 
 on:
   schedule:
-    # 週一至週五 18:07～22:07（台灣時間）每小時一次＝ 10:07～14:07 UTC。
-    # GitHub 排程在忙碌時可能延遲或被略過，多排幾次當作備援；
-    # 當天推播成功後，之後的排程會在「檢查今天是否已推播」步驟直接跳過。
+    # 備援排程：週一至週五 18:07～22:07（台灣時間）每小時一次＝ 10:07～14:07 UTC。
+    # GitHub 排程在忙碌時可能延遲或被略過，主要改由外部定時服務（cron-job.org）
+    # 以 workflow_dispatch＋auto=true 觸發，見 README「外部定時觸發」。
+    # 當天推播成功後，之後的觸發會在「檢查今天是否已推播」步驟直接跳過。
     - cron: "7 10-14 * * 1-5"
   workflow_dispatch:
     inputs:
@@ -20,6 +21,10 @@ on:
         description: "發布報告網頁"
         type: boolean
         default: true
+      auto:
+        description: "自動排程模式（給外部定時服務使用；手動執行請保持不勾選）"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # 推送報告網頁到 gh-pages 分支
@@ -35,13 +40,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 判斷執行模式
+        id: mode
+        run: |
+          # 自動模式：GitHub 排程，或外部定時服務以 auto=true 觸發
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.auto }}" = "true" ]; then
+            echo "auto=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "auto=false" >> "$GITHUB_OUTPUT"
+          fi
+          # 目標交易日：台灣時間中午以前執行（例如排程延遲到半夜）視為前一天的推播
+          echo "day=$(TZ=Asia/Taipei date -d '-12 hours' +%F)" >> "$GITHUB_OUTPUT"
+
       - name: 檢查今天是否已推播
         id: check
-        if: github.event_name == 'schedule'
+        if: steps.mode.outputs.auto == 'true'
         run: |
           # 以 gh-pages 分支上的 notified/YYYY-MM-DD.txt 判斷當天是否已推播成功；
           # 只發布網頁、沒有推播的手動測試不會影響晚上的排程
-          day=$(TZ=Asia/Taipei date +%F)
+          day="${{ steps.mode.outputs.day }}"
           if git fetch -q --depth 1 origin gh-pages 2>/dev/null && git cat-file -e "FETCH_HEAD:notified/${day}.txt" 2>/dev/null; then
             echo "${day} 已推播過，本次排程跳過"
             echo "done=true" >> "$GITHUB_OUTPUT"
@@ -66,13 +83,15 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
           INPUT_DATE: ${{ github.event.inputs.date }}
+          AUTO: ${{ steps.mode.outputs.auto }}
+          TARGET_DAY: ${{ steps.mode.outputs.day }}
         run: |
           # GitHub Pages 網址，推播摘要會附上完整報告連結
           export REPORT_BASE_URL="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}"
           args=(--summary-file reports/summary.txt)
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            # 排程執行：只處理當天資料，休市日自動跳過
-            args+=(--today-only)
+          if [ "$AUTO" = "true" ]; then
+            # 自動模式：只處理目標交易日的資料，休市或尚未更新時跳過（下一次觸發再試）
+            args+=(--date "$TARGET_DAY" --today-only)
           elif [ -n "$INPUT_DATE" ]; then
             args+=(--date "$INPUT_DATE")
           fi
@@ -83,7 +102,7 @@ jobs:
         id: pages
         if: >-
           hashFiles('reports/*.html') != '' &&
-          (github.event_name == 'schedule' || github.event.inputs.publish == 'true')
+          (steps.mode.outputs.auto == 'true' || github.event.inputs.publish == 'true')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -133,7 +152,7 @@ jobs:
         id: notify
         if: >-
           !cancelled() && hashFiles('reports/summary.txt') != '' &&
-          (github.event_name == 'schedule' || github.event.inputs.notify == 'true')
+          (steps.mode.outputs.auto == 'true' || github.event.inputs.notify == 'true')
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -156,7 +175,7 @@ jobs:
             git -C marker remote add origin "$remote"
           fi
           mkdir -p marker/notified
-          echo "推播時間：$(TZ=Asia/Taipei date '+%F %T')（${{ github.event_name }}）" > "marker/notified/${day}.txt"
+          echo "推播時間：$(TZ=Asia/Taipei date '+%F %T')（${{ github.event_name }}，auto=${{ steps.mode.outputs.auto }}）" > "marker/notified/${day}.txt"
           cd marker
           git add -A
           git -c user.name="github-actions[bot]" \

@@ -743,6 +743,23 @@ class MainTest(unittest.TestCase):
         self.assertEqual(files, [])
         post.assert_not_called()
 
+    def test_today_only_with_date_skips_when_no_data(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
+                mock.patch.dict(os.environ, {"FINMIND_TOKEN": "t"}), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--date", "2026-09-28", "--today-only",
+                                                "--output-dir", tmp]), \
+                mock.patch("sys.stdout"):
+            self.assertEqual(chip_report.main(), 0)
+            self.assertEqual(list(Path(tmp).iterdir()), [])
+
+    def test_date_without_today_only_still_errors_when_no_data(self):
+        with mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
+                mock.patch.dict(os.environ, {"FINMIND_TOKEN": "t"}), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--date", "2026-09-28"]), \
+                mock.patch("sys.stdout"), mock.patch("sys.stderr"):
+            self.assertEqual(chip_report.main(), 1)
+
     def test_taipei_today_uses_utc_plus_8(self):
         fake_now = chip_report.datetime(2026, 9, 28, 17, 0, tzinfo=chip_report.timezone.utc)
         with mock.patch.object(chip_report, "datetime") as dt:
