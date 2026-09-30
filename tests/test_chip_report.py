@@ -9,6 +9,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import chip_report  # noqa: E402
+import extras  # noqa: E402
 import finmind  # noqa: E402
 import notify  # noqa: E402
 import pages  # noqa: E402
@@ -22,6 +23,8 @@ STOCK_INFO = [
     {"stock_id": "2317", "stock_name": "鴻海", "type": "twse", "industry_category": "其他電子業"},
     {"stock_id": "6488", "stock_name": "環球晶", "type": "tpex", "industry_category": "半導體業"},
     {"stock_id": "0050", "stock_name": "元大台灣50", "type": "twse", "industry_category": "ETF"},
+    {"stock_id": "00878", "stock_name": "國泰永續高股息", "type": "twse", "industry_category": "ETF"},
+    {"stock_id": "0056", "stock_name": "元大高股息", "type": "twse", "industry_category": "ETF"},
 ]
 
 INSTITUTIONAL = [
@@ -33,6 +36,9 @@ INSTITUTIONAL = [
     {"stock_id": "2317", "name": "Investment_Trust", "buy": 0, "sell": 50_000},
     {"stock_id": "6488", "name": "Foreign_Investor", "buy": 100_000, "sell": 900_000},
     {"stock_id": "0050", "name": "Foreign_Investor", "buy": 9_999_999, "sell": 0},
+    {"stock_id": "00878", "name": "Foreign_Investor", "buy": 2_000_000, "sell": 0},
+    {"stock_id": "00878", "name": "Dealer_Hedging", "buy": 0, "sell": 500_000},
+    {"stock_id": "0056", "name": "Investment_Trust", "buy": 0, "sell": 100_000},
 ]
 
 PRICES = [
@@ -61,10 +67,76 @@ HISTORY = {
 }
 
 
+def _oi(day, investor, long_oi, short_oi, **extra):
+    return {"date": day, "institutional_investors": investor,
+            "long_open_interest_balance_volume": long_oi,
+            "short_open_interest_balance_volume": short_oi, **extra}
+
+
+FUTURES = [
+    _oi("2026-09-24", "外資", 21_000, 49_000),
+    _oi("2026-09-24", "投信", 29_000, 5_000),
+    _oi("2026-09-25", "外資", 20_000, 50_000),
+    _oi("2026-09-25", "投信", 30_000, 5_000),
+    _oi("2026-09-25", "自營商", 10_000, 12_000),
+]
+
+OPTION_INST = [
+    _oi("2026-09-24", "外資", 28_000, 20_000, call_put="買權"),
+    _oi("2026-09-25", "外資", 30_000, 20_000, call_put="買權"),
+    _oi("2026-09-25", "外資", 15_000, 25_000, call_put="賣權"),
+    _oi("2026-09-25", "投信", 1, 1, call_put="買權"),
+]
+
+OPTION_DAILY = {
+    "2026-09-25": [
+        {"call_put": "call", "open_interest": 60_000, "trading_session": "position"},
+        {"call_put": "call", "open_interest": 40_000, "trading_session": "position"},
+        {"call_put": "put", "open_interest": 120_000, "trading_session": "position"},
+        {"call_put": "put", "open_interest": 999, "trading_session": "after_market"},
+    ],
+    "2026-09-24": [
+        {"call_put": "call", "open_interest": 100_000, "trading_session": "position"},
+        {"call_put": "put", "open_interest": 100_000, "trading_session": "position"},
+    ],
+}
+
+MARGIN = [
+    {"stock_id": "2330", "MarginPurchaseTodayBalance": 20_000, "MarginPurchaseYesterdayBalance": 19_000,
+     "ShortSaleTodayBalance": 400, "ShortSaleYesterdayBalance": 500},
+    {"stock_id": "2317", "MarginPurchaseTodayBalance": 30_000, "MarginPurchaseYesterdayBalance": 31_000,
+     "ShortSaleTodayBalance": 1_500, "ShortSaleYesterdayBalance": 1_000},
+]
+
+
+def _holding(stock_id, big_pct, people):
+    return [
+        {"stock_id": stock_id, "HoldingSharesLevel": "800,001-1,000,000", "percent": 5.0, "people": 10},
+        {"stock_id": stock_id, "HoldingSharesLevel": "more than 1,000,001", "percent": big_pct, "people": 100},
+        {"stock_id": stock_id, "HoldingSharesLevel": "total", "percent": 100.0, "people": people},
+    ]
+
+
+HOLDING = {
+    "2026-09-25": _holding("2330", 80.5, 1_000_000) + _holding("2317", 40.0, 500_000),
+    "2026-09-18": _holding("2330", 80.0, 1_010_000) + _holding("2317", 41.0, 490_000),
+}
+
+
 def fake_fetch(token, dataset, **params):
     if dataset == "TaiwanStockInfo":
         return STOCK_INFO
     day = params.get("start_date")
+    if dataset == "TaiwanFuturesInstitutionalInvestors":
+        return FUTURES
+    if dataset == "TaiwanOptionInstitutionalInvestors":
+        return OPTION_INST
+    if dataset == "TaiwanOptionDaily":
+        return OPTION_DAILY.get(day, [])
+    if dataset == "TaiwanStockHoldingSharesPer":
+        return HOLDING.get(day, [])
+    if dataset == "TaiwanStockMarginPurchaseShortSale":
+        return MARGIN if day == "2026-09-25" else []
     if dataset == "TaiwanStockInstitutionalInvestorsBuySell" and day in HISTORY:
         return HISTORY[day]
     if day != "2026-09-25":
@@ -201,6 +273,66 @@ class StreakTest(unittest.TestCase):
         self.assertNotIn("連買天數", [c.header for c in report.sections[0].columns])
 
 
+class ExtrasTest(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(finmind, "fetch_dataset", fake_fetch)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.day = date(2026, 9, 25)
+        self.stocks = build_stocks(
+            finmind.load_institutional("t", self.day),
+            finmind.load_prices("t", self.day),
+            finmind.load_stock_info("t", ["00878", "0056"]),
+        )
+
+    def test_etf_section(self):
+        etfs = {k: v for k, v in self.stocks.items() if k in ("00878", "0056")}
+        section = extras.build_etf_section(etfs, ["0056", "00878"])
+        self.assertEqual([r[0] for r in section.rows], ["00878", "0056"])
+        self.assertEqual(section.rows[0][section.col("三大法人(張)")], 1500)
+        self.assertEqual(section.rows[0][section.col("自營商(張)")], -500)
+        self.assertEqual(self.stocks["00878"].industry, "ETF")
+        self.assertNotIn("0050", self.stocks)
+
+    def test_futures_section(self):
+        section = chip_report.futures_section("t", self.day)
+        rows = {r[0]: r for r in section.rows}
+        self.assertEqual(rows["外資台指期"][1:], [-30_000, -2_000, 20_000, 50_000])
+        self.assertEqual(rows["投信台指期"][1:3], [25_000, 1_000])
+        self.assertIsNone(rows["自營商台指期"][2])  # 前一日無資料
+        self.assertEqual(rows["外資台指買權"][1:3], [10_000, 2_000])
+        self.assertEqual(rows["外資台指賣權"][1:3], [-10_000, None])
+        self.assertEqual(section.meta["pc_ratio"], (120.0, 100.0))
+        self.assertIn("Put/Call Ratio：120.00%（前一交易日 100.00%）", section.note)
+
+    def test_futures_without_call_put_column(self):
+        rows = [dict(r) for r in OPTION_INST]
+        for r in rows:
+            r.pop("call_put")
+        section = extras.build_futures_section(self.day, FUTURES, rows)
+        self.assertEqual([r[0] for r in section.rows], ["外資台指期", "投信台指期", "自營商台指期"])
+
+    def test_margin_sections(self):
+        up, down, short = extras.build_margin_sections(
+            list(self.stocks.values()), finmind.load_margin("t", self.day), 20
+        )
+        self.assertEqual([(r[1], r[3]) for r in up.rows], [("2330", 1000)])
+        self.assertEqual([(r[1], r[3]) for r in down.rows], [("2317", -1000)])
+        self.assertEqual([(r[1], r[5]) for r in short.rows], [("2317", 500)])
+        self.assertAlmostEqual(short.rows[0][short.col("券資比")], 5.0)
+        self.assertIn("融資 +0 張、融券 +400 張", up.note)
+
+    def test_holder_sections(self):
+        weeks = finmind.find_holding_weeks("t", date(2026, 9, 29))
+        self.assertEqual([d.isoformat() for d, _ in weeks], ["2026-09-25", "2026-09-18"])
+        up, down = extras.build_holder_sections(list(self.stocks.values()), weeks, 20)
+        self.assertEqual(up.rows[0][1], "2330")
+        self.assertAlmostEqual(up.rows[0][up.col("週增減(百分點)")], 0.5)
+        self.assertEqual(up.rows[0][up.col("人數增減")], -10_000)
+        self.assertEqual(down.rows[0][1], "2317")
+        self.assertIn("集保資料日期 2026-09-25", up.note)
+
+
 class PagesTest(unittest.TestCase):
     def test_publish_builds_index(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -284,6 +416,47 @@ class MainTest(unittest.TestCase):
             summary = Path(tmp, "summary.txt").read_text(encoding="utf-8")
         self.assertIn("【外資連買】", summary)
         self.assertIn("完整報告：https://u.github.io/repo/2026-09-25.html", summary)
+        self.assertIn("外資台指期 淨未平倉 -30,000 口（日增減 -2,000）", summary)
+        self.assertIn("P/C Ratio 120.00%（前日 100.00%）", summary)
+        self.assertIn("00878 國泰永續高股息 +1,500 張", summary)
+        self.assertIn("1. 2330 台積電 +1,000 張", summary)
+        self.assertIn("1. 2330 台積電 +0.50 百分點", summary)
+
+    def test_etfs_excluded_from_stock_rankings(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(finmind, "fetch_dataset", fake_fetch), \
+                mock.patch.dict(os.environ, {"FINMIND_TOKEN": "t"}), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--output-dir", tmp,
+                                                "--formats", "md"]), \
+                mock.patch("sys.stdout"):
+            self.assertEqual(chip_report.main(), 0)
+            md = Path(tmp, "chip_report_2026-09-25.md").read_text(encoding="utf-8")
+        before_etf = md.split("## 高股息 ETF")[0]
+        self.assertNotIn("00878", before_etf)  # 不在個股排行
+        self.assertIn("| 00878 | 國泰永續高股息 |", md)
+        headings = [line for line in md.splitlines() if line.startswith("## ")]
+        self.assertEqual(headings[:2], ["## 全市場總覽", "## 期貨選擇權籌碼"])
+
+    def test_extra_failure_does_not_break_report(self):
+        def failing_fetch(token, dataset, **params):
+            if dataset in ("TaiwanStockMarginPurchaseShortSale", "TaiwanFuturesInstitutionalInvestors"):
+                raise finmind.FinMindError("權限不足")
+            return fake_fetch(token, dataset, **params)
+
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(finmind, "fetch_dataset", failing_fetch), \
+                mock.patch.dict(os.environ, {"FINMIND_TOKEN": "t"}), \
+                mock.patch.object(sys, "argv", ["chip_report.py", "--output-dir", tmp,
+                                                "--formats", "md"]), \
+                mock.patch("sys.stdout"), mock.patch("sys.stderr") as err:
+            self.assertEqual(chip_report.main(), 0)
+            md = Path(tmp, "chip_report_2026-09-25.md").read_text(encoding="utf-8")
+        self.assertNotIn("融資增加排行", md)
+        self.assertNotIn("期貨選擇權籌碼", md)
+        self.assertIn("千張大戶持股增加", md)
+        self.assertIn("外資買超排行", md)
+        warnings = "".join(c.args[0] for c in err.write.call_args_list)
+        self.assertIn("融資融券資料讀取失敗", warnings)
 
     def test_missing_token(self):
         with mock.patch.dict(os.environ, {"FINMIND_TOKEN": ""}), \

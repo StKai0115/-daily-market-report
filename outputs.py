@@ -20,7 +20,7 @@ def format_cell(value, kind):
         return f"{value:.2f}%"
     if kind == "signed_pct":
         return f"{value:+.2f}%"
-    if kind == "signed_yi":
+    if kind in ("signed_yi", "signed_float"):
         return f"{value:+,.2f}"
     raise ValueError(f"未知的欄位格式：{kind}")
 
@@ -170,6 +170,7 @@ EXCEL_FORMATS = {
     "pct": '0.00"%"',
     "signed_pct": '+0.00"%";-0.00"%";0.00"%"',
     "signed_yi": "+#,##0.00;-#,##0.00;0.00",
+    "signed_float": "+0.00;-0.00;0.00",
 }
 
 SHEET_NAMES = {
@@ -182,6 +183,13 @@ SHEET_NAMES = {
     "foreign_streak": "外資連續買超",
     "trust_streak": "投信連續買超",
     "industry": "產業別",
+    "etf": "高股息ETF",
+    "futures": "期貨選擇權",
+    "margin_up": "融資增加",
+    "margin_down": "融資減少",
+    "short_up": "融券增加",
+    "holder_up": "千張大戶增加",
+    "holder_down": "千張大戶減少",
     "all": "全部個股",
 }
 
@@ -218,4 +226,6 @@ def write_excel(report, path):
         ws.freeze_panes = "A2"
         if section.rows:
             ws.auto_filter.ref = ws.dimensions
+        if section.note:
+            ws.cell(row=len(section.rows) + 3, column=1, value=section.note)
     wb.save(path)
