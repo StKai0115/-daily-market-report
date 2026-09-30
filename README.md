@@ -7,6 +7,7 @@
 | 區塊 | 說明 |
 |---|---|
 | 全市場總覽 | 外資、投信、自營商當日合計買賣超（張數與估計金額） |
+| 未來 7 天美股重大事件 | FOMC、CPI、非農等經濟數據、大型股財報、選擇權到期日、休市日，時間換算成台灣時間 |
 | 期貨選擇權籌碼 | 三大法人台指期淨未平倉、外資台指買權／賣權淨未平倉（含日增減）、選擇權 Put/Call Ratio |
 | 外資買超排行 | |
 | 外資賣超排行 | |
@@ -21,6 +22,31 @@
 | 千張大戶持股增加／減少 | 集保股權分散表，持股超過 1,000 張的大戶持股比例週增減 |
 
 每個排行包含以下欄位：代號、名稱、**產業**、市場、**收盤價**、**漲跌幅**、買賣超(張)、**買賣超金額(億)**、**佔成交量比例**、**連買／連賣天數**。
+
+### 美股重大事件行事曆
+
+每天列出**未來 7 天**的重大事件，時間皆已換算成**台灣時間**（自動處理美國夏令／冬令時間）：
+
+| 重要性 | 事件 | 資料來源 |
+|---|---|---|
+| ⭐⭐⭐ | FOMC 利率決議＋主席記者會（每季一次含點陣圖） | Fed 官網年度日程（抓不到時用程式內建日程） |
+| ⭐⭐⭐ | CPI 消費者物價指數、非農就業報告 | FRED API（需 `FRED_API_KEY`） |
+| ⭐⭐ | PCE 物價指數、PPI 生產者物價指數、GDP | FRED API（需 `FRED_API_KEY`） |
+| ⭐⭐⭐／⭐⭐ | 大型股財報（見下方名單） | Alpha Vantage（需 `ALPHAVANTAGE_API_KEY`） |
+| ⭐⭐ | 美股選擇權月到期、四巫日（遇休市提前一天） | 依規則計算 |
+| ⭐ | 美股休市、提前收盤、台指期／台指選擇權月結算 | 依規則計算 |
+
+財報追蹤名單（修改 `events.py` 開頭的 `EARNINGS_WATCH` 即可增刪）：
+
+- ⭐⭐⭐：NVDA、AAPL、MSFT、GOOGL、AMZN、META、TSLA、AVGO、TSM
+- ⭐⭐：AMD、MU、ASML、QCOM、ARM、NFLX、ORCL、PLTR、LLY、JPM、WMT
+
+注意事項：
+
+- 財報日期由公司公布，可能臨時調整；「盤前公布」約為台灣時間當天晚上，「盤後公布」約為台灣時間隔天清晨
+- 經濟數據多在美東 8:30 公布（台灣時間夏令 20:30、冬令 21:30）；FOMC 決議在美東 14:00（台灣時間隔天凌晨 2:00 或 3:00）
+- 沒設定 API 金鑰或某個來源失效時，只會略過該類事件，其他內容照常產生
+- 台指結算日以第三個週三計算，遇台股休市會順延，請以期交所公告為準
 
 ### 每週五週報
 
@@ -179,6 +205,9 @@ python chip_report.py --no-streak
 :: 自訂追蹤的高股息 ETF
 python chip_report.py --etfs 0056,00878,00919
 
+:: 不產生美股重大事件行事曆
+python chip_report.py --no-events
+
 :: 非週五也產生本週週報（週五會自動產生）；--no-weekly 則是週五不產生
 python chip_report.py --weekly
 
@@ -234,6 +263,35 @@ setx LINE_USER_ID "你的UserID"
 ```
 
 LINE 官方帳號免費方案每月有推播則數上限，個人每日使用一則通常足夠。
+
+## 申請美股行事曆用的 API 金鑰（免費）
+
+美股重大事件需要兩組免費金鑰，申請一次即可。
+
+### FRED API 金鑰（經濟數據公布日期）
+
+1. 前往 <https://fredaccount.stlouisfed.org/login/secure/> 按「Create New Account」註冊帳號並登入
+2. 登入後點右上角帳號 →「**API Keys**」→「**Request API Key**」
+3. 用途說明隨意填寫（例如 `Personal market calendar`），同意條款後送出
+4. 頁面會顯示一串 32 碼英數字，就是 **FRED API Key**
+
+### Alpha Vantage API 金鑰（財報日期）
+
+1. 前往 <https://www.alphavantage.co/support/#api-key>
+2. 身分選「Individual」或「Investor」，填寫 Email 後按「GET FREE API KEY」
+3. 頁面會直接顯示金鑰（一串英數字），請複製保存
+4. 免費方案每天可查詢 25 次，本程式每次執行只用 1 次
+
+### 存到 GitHub Secrets
+
+和其他金鑰一樣：「Settings」→「Secrets and variables」→「Actions」→「New repository secret」，新增兩個：
+
+| Name | 內容 |
+|---|---|
+| `FRED_API_KEY` | FRED API Key |
+| `ALPHAVANTAGE_API_KEY` | Alpha Vantage API Key |
+
+在自己電腦執行時，也可以用 `setx FRED_API_KEY "金鑰"`、`setx ALPHAVANTAGE_API_KEY "金鑰"` 設定。
 
 ## 雲端自動推播（GitHub Actions）
 
