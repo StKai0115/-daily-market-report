@@ -293,6 +293,45 @@ LINE 官方帳號免費方案每月有推播則數上限，個人每日使用一
 
 在自己電腦執行時，也可以用 `setx FRED_API_KEY "金鑰"`、`setx ALPHAVANTAGE_API_KEY "金鑰"` 設定。
 
+## LINE 推播對象
+
+用 GitHub 的 **Variables** 決定推給誰（「Settings」→「Secrets and variables」→「Actions」→ 上方切到「**Variables**」分頁 →「New repository variable」）。Variables 和 Secrets 一樣不會公開，但可以隨時看到、直接修改。
+
+| `LINE_SEND_MODE` 的值 | 推給誰 | 需要另外設定 |
+|---|---|---|
+| `self`（或不設定） | 只推給自己（Secret `LINE_USER_ID`） | 無 |
+| `broadcast` | **所有**加入官方帳號的好友；朋友封鎖或刪除好友就不會再收到 | 無 |
+| `list` | 只推給指定的人 | Variable `LINE_USER_IDS` |
+
+⚠️ **推播額度依收件人數計算**：每推一次，每位收件人各算 1 則。例如 3 人 × 每月約 22 個交易日 ≈ 66 則。免費方案的每月額度請以 LINE 官方帳號後台「方案」頁面為準，額度用完當月就無法推播（連自己也收不到）。
+
+### `list` 模式：設定 `LINE_USER_IDS`
+
+每行一個 User ID，`#` 後面可以加備註（記得把自己也列進去）：
+
+```
+Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # 我
+Uyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy  # 小明
+```
+
+要新增或移除收件人，直接編輯這個 Variable 即可，下一次推播就會套用。
+
+### 取得朋友的 LINE User ID
+
+LINE 不會在介面上顯示朋友的 User ID，需要讓朋友傳一則訊息給官方帳號，再從 webhook 記錄中查看。不需要寫程式：
+
+1. 用瀏覽器開啟 <https://webhook.site>，複製頁面上「Your unique URL」（`https://webhook.site/` 開頭）
+2. 到 LINE Developers → 你的 channel →「Messaging API」分頁：
+   - **Webhook URL** 貼上剛才的網址 →「Update」
+   - 開啟「**Use webhook**」
+3. 請朋友**先加官方帳號為好友**，再傳任意一則訊息給官方帳號（例如「hi」）
+4. 回到 webhook.site 頁面，左側會出現一筆新請求，右側內容中找到：
+   ```
+   "source": {"type": "user", "userId": "Uxxxxxxxx..."}
+   ```
+   `userId` 後面 U 開頭的 33 碼就是朋友的 User ID
+5. **取得後記得關閉「Use webhook」**（webhook.site 是公開的測試服務，不要長期使用）
+
 ## 雲端自動推播（GitHub Actions）
 
 設定完成後，GitHub 會在**週一至週五傍晚自動產生報告並推播**，電腦關機也不影響。

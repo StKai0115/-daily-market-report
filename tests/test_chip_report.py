@@ -612,6 +612,48 @@ class NotifyCliTest(unittest.TestCase):
             self.assertEqual(notify.main(["notify.py", str(path)]), 0)
         self.assertEqual(post.call_args.kwargs["json"]["messages"][0]["text"], "摘要內容")
 
+    def _send_with_env(self, env):
+        base = {"LINE_CHANNEL_ACCESS_TOKEN": "ln", "LINE_USER_ID": "Uself", "LINE_USER_IDS": "",
+                "LINE_SEND_MODE": "", "TELEGRAM_BOT_TOKEN": "", "TELEGRAM_CHAT_ID": ""}
+        base.update(env)
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.dict(os.environ, base), \
+                mock.patch("notify.requests.post", return_value=mock.Mock(status_code=200)) as post, \
+                mock.patch("sys.stdout") as out, mock.patch("sys.stderr"):
+            path = Path(tmp) / "summary.txt"
+            path.write_text("日報\f週報", encoding="utf-8")
+            code = notify.main(["notify.py", str(path)])
+        printed = "".join(c.args[0] for c in out.write.call_args_list)
+        return code, post, printed
+
+    def test_line_mode_self_default(self):
+        code, post, printed = self._send_with_env({})
+        self.assertEqual(code, 0)
+        self.assertEqual(post.call_args.args[0], "https://api.line.me/v2/bot/message/push")
+        self.assertEqual(post.call_args.kwargs["json"]["to"], "Uself")
+        self.assertEqual(len(post.call_args.kwargs["json"]["messages"]), 2)
+
+    def test_line_mode_broadcast(self):
+        code, post, printed = self._send_with_env({"LINE_SEND_MODE": "Broadcast"})
+        self.assertEqual(code, 0)
+        self.assertEqual(post.call_args.args[0], "https://api.line.me/v2/bot/message/broadcast")
+        self.assertNotIn("to", post.call_args.kwargs["json"])
+        self.assertIn("廣播給所有好友", printed)
+
+    def test_line_mode_list(self):
+        ids = "Uself #我\nUfriend1 #小明, Ufriend2\n\nUfriend1"
+        code, post, printed = self._send_with_env({"LINE_SEND_MODE": "list", "LINE_USER_IDS": ids})
+        self.assertEqual(code, 0)
+        self.assertEqual(post.call_args.args[0], "https://api.line.me/v2/bot/message/multicast")
+        self.assertEqual(post.call_args.kwargs["json"]["to"], ["Uself", "Ufriend1", "Ufriend2"])
+        self.assertIn("3 位指定對象", printed)
+
+    def test_line_mode_invalid_or_empty_list(self):
+        self.assertEqual(self._send_with_env({"LINE_SEND_MODE": "all"})[0], 1)
+        code, post, _ = self._send_with_env({"LINE_SEND_MODE": "list"})
+        self.assertEqual(code, 1)
+        post.assert_not_called()
+
     def test_failure_returns_1(self):
         env = {"LINE_CHANNEL_ACCESS_TOKEN": "ln", "LINE_USER_ID": "U1"}
         bad = mock.Mock(status_code=400, text="bad")
