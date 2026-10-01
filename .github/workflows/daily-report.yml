@@ -158,6 +158,10 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          # 推播對象（Settings → Secrets and variables → Actions → Variables）：
+          # LINE_SEND_MODE＝self（預設）／list／broadcast；list 模式的收件人列在 LINE_USER_IDS
+          LINE_SEND_MODE: ${{ vars.LINE_SEND_MODE }}
+          LINE_USER_IDS: ${{ vars.LINE_USER_IDS }}
         run: python notify.py reports/summary.txt
 
       - name: 記錄已推播

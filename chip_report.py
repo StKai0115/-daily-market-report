@@ -204,7 +204,11 @@ def main():
     elif args.today_only:
         trade_date = taipei_today()
 
-    channels = configured_channels() if args.notify else []
+    try:
+        channels = configured_channels() if args.notify else []
+    except ValueError as exc:
+        print(f"錯誤：{exc}", file=sys.stderr)
+        return 1
     if args.notify and not channels:
         print(
             "錯誤：使用 --notify 需設定 TELEGRAM_BOT_TOKEN＋TELEGRAM_CHAT_ID，"

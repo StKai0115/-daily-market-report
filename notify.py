@@ -148,19 +148,77 @@ def send_telegram(bot_token, chat_id, text):
             raise RuntimeError(f"Telegram 推播失敗（HTTP {resp.status_code}）：{resp.text[:200]}")
 
 
-def send_line(channel_token, user_id, text):
+LINE_API = "https://api.line.me/v2/bot/message"
+LINE_MODES = ("self", "list", "broadcast")
+
+
+def _line_messages(text):
+    # 同一次推播最多 5 個對話框；額度依收件人數計算，與對話框數無關
+    return [{"type": "text", "text": part[:5000]} for part in split_messages(text)[:5]]
+
+
+def _line_post(channel_token, endpoint, body):
     resp = requests.post(
-        "https://api.line.me/v2/bot/message/push",
+        f"{LINE_API}/{endpoint}",
         headers={"Authorization": f"Bearer {channel_token}"},
-        # 同一次推播最多 5 個對話框，依 LINE 計算方式只算一則訊息額度
-        json={
-            "to": user_id,
-            "messages": [{"type": "text", "text": part[:5000]} for part in split_messages(text)[:5]],
-        },
+        json=body,
         timeout=TIMEOUT,
     )
     if resp.status_code != 200:
         raise RuntimeError(f"LINE 推播失敗（HTTP {resp.status_code}）：{resp.text[:200]}")
+
+
+def send_line(channel_token, user_id, text):
+    """推播給單一使用者。"""
+    _line_post(channel_token, "push", {"to": user_id, "messages": _line_messages(text)})
+
+
+def send_line_multicast(channel_token, user_ids, text):
+    """推播給指定的多位使用者（每次最多 500 人）。"""
+    for i in range(0, len(user_ids), 500):
+        _line_post(channel_token, "multicast",
+                   {"to": user_ids[i:i + 500], "messages": _line_messages(text)})
+
+
+def send_line_broadcast(channel_token, text):
+    """廣播給官方帳號的所有好友。"""
+    _line_post(channel_token, "broadcast", {"messages": _line_messages(text)})
+
+
+def parse_user_ids(value):
+    """LINE_USER_IDS：以逗號、空白或換行分隔；# 之後視為備註（例如 Uxxxx #小明）。"""
+    ids = []
+    for line in value.replace(",", "\n").splitlines():
+        token = line.split("#", 1)[0].strip()
+        if token and token not in ids:
+            ids.append(token)
+    return ids
+
+
+def line_channel():
+    """依 LINE_SEND_MODE 決定 LINE 推播對象，回傳 (名稱, 發送函式) 或 None。
+
+    - self（預設）：只推給 LINE_USER_ID
+    - list：推給 LINE_USER_IDS 列出的所有人
+    - broadcast：廣播給官方帳號的所有好友
+    """
+    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
+    if not token:
+        return None
+    mode = os.environ.get("LINE_SEND_MODE", "").strip().lower() or "self"
+    if mode not in LINE_MODES:
+        raise ValueError(f"LINE_SEND_MODE 只能是 {'、'.join(LINE_MODES)}，目前是「{mode}」")
+    if mode == "broadcast":
+        return ("LINE（廣播給所有好友）", lambda text: send_line_broadcast(token, text))
+    if mode == "list":
+        ids = parse_user_ids(os.environ.get("LINE_USER_IDS", ""))
+        if not ids:
+            raise ValueError("LINE_SEND_MODE 為 list 時，需在 LINE_USER_IDS 列出收件人的 User ID")
+        return (f"LINE（{len(ids)} 位指定對象）", lambda text: send_line_multicast(token, ids, text))
+    user = os.environ.get("LINE_USER_ID", "").strip()
+    if not user:
+        return None
+    return ("LINE", lambda text: send_line(token, user, text))
 
 
 def configured_channels():
@@ -170,10 +228,9 @@ def configured_channels():
     tg_chat = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     if tg_token and tg_chat:
         channels.append(("Telegram", lambda text: send_telegram(tg_token, tg_chat, text)))
-    line_token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "").strip()
-    line_user = os.environ.get("LINE_USER_ID", "").strip()
-    if line_token and line_user:
-        channels.append(("LINE", lambda text: send_line(line_token, line_user, text)))
+    line = line_channel()
+    if line:
+        channels.append(line)
     return channels
 
 
@@ -195,7 +252,11 @@ def main(argv):
     if len(argv) != 2:
         print("用法：python notify.py 摘要檔路徑", file=sys.stderr)
         return 1
-    channels = configured_channels()
+    try:
+        channels = configured_channels()
+    except ValueError as exc:
+        print(f"錯誤：{exc}", file=sys.stderr)
+        return 1
     if not channels:
         print(
             "錯誤：需設定 TELEGRAM_BOT_TOKEN＋TELEGRAM_CHAT_ID，"
