@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>台股每日籌碼報告 2026-10-05</title>
+<style>
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --text: #1f2328; --muted: #656d76;
+  --border: #d8dee4; --head: #eef1f4; --up: #d1242f; --down: #1a7f37;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --card: #161b22; --text: #e6edf3; --muted: #8d96a0;
+    --border: #30363d; --head: #1f252d; --up: #ff6b6b; --down: #3fb950;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 16px; background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+  font-size: 14px; line-height: 1.5;
+}
+main { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+.subtitle { color: var(--muted); margin: 0 0 16px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+nav a {
+  color: var(--text); text-decoration: none; background: var(--card);
+  border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font-size: 13px;
+}
+section {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 16px;
+}
+h2 { font-size: 17px; margin: 0 0 8px; }
+.note { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; white-space: nowrap; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+th { background: var(--head); font-weight: 600; text-align: left; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.up { color: var(--up); }
+td.down { color: var(--down); }
+tbody tr:hover { background: var(--head); }
+</style>
+</head>
+<body>
+<main>
+<p class="subtitle"><a href="index.html" style="color: inherit">← 所有報告</a></p>
+<h1>台股每日籌碼報告 2026-10-05</h1>
+<p class="subtitle">資料來源：FinMind（上市＋上櫃普通股；外資含外資自營商）｜紅色為買超／上漲，綠色為賣超／下跌</p>
+<nav><a href="#overview">全市場總覽</a><a href="#futures">期貨選擇權籌碼</a><a href="#events">未來 7 天重大事件</a><a href="#foreign_buy">外資買超排行</a><a href="#foreign_sell">外資賣超排行</a><a href="#trust_buy">投信買超排行</a><a href="#trust_sell">投信賣超排行</a><a href="#sync_buy">外資投信同步買超</a><a href="#foreign_streak">外資連續買超</a><a href="#trust_streak">投信連續買超</a><a href="#industry">產業別法人淨買賣</a><a href="#etf">高股息 ETF 法人買賣超</a><a href="#margin_up">融資增加排行</a><a href="#margin_down">融資減少排行</a><a href="#short_up">融券增加排行</a><a href="#holder_up">千張大戶持股增加</a><a href="#holder_down">千張大戶持股減少</a></nav>
+<section id="overview">
+<h2>全市場總覽</h2>
+<p class="note">統計範圍為上市櫃普通股，金額以個股收盤價估算</p>
+<div class="table-wrap"><table><thead><tr>
+<th>法人</th>
+<th class="num">買賣超(張)</th>
+<th class="num">估計金額(億)</th>
+</tr></thead><tbody>
+<tr><td>外資</td><td class="num down">-483,277</td><td class="num up">+577.36</td></tr>
+<tr><td>投信</td><td class="num down">-45,278</td><td class="num down">-48.26</td></tr>
+<tr><td>自營商</td><td class="num down">-28,204</td><td class="num up">+51.95</td></tr>
+<tr><td>合計</td><td class="num down">-556,759</td><td class="num up">+581.05</td></tr>
+</tbody></table></div></section>
+<section id="futures">
+<h2>期貨選擇權籌碼</h2>
+<p class="note">選擇權未平倉 Put/Call Ratio：91.95%（前一交易日 85.24%）；淨未平倉＝多方－空方，正數偏多、負數偏空</p>
+<div class="table-wrap"><table><thead><tr>
+<th>項目</th>
+<th class="num">淨未平倉(口)</th>
+<th class="num">日增減(口)</th>
+<th class="num">多方未平倉(口)</th>
+<th class="num">空方未平倉(口)</th>
+</tr></thead><tbody>
+<tr><td>外資台指期</td><td class="num down">-77,004</td><td class="num up">+3,300</td><td class="num">14,760</td><td class="num">91,764</td></tr>
+<tr><td>投信台指期</td><td class="num up">+75,144</td><td class="num up">+475</td><td class="num">77,893</td><td class="num">2,749</td></tr>
+<tr><td>自營商台指期</td><td class="num down">-2,155</td><td class="num down">-1,149</td><td class="num">2,810</td><td class="num">4,965</td></tr>
+<tr><td>外資台指買權</td><td class="num up">+63</td><td class="num up">+1,176</td><td class="num">12,587</td><td class="num">12,524</td></tr>
+<tr><td>外資台指賣權</td><td class="num up">+437</td><td class="num down">-144</td><td class="num">6,563</td><td class="num">6,126</td></tr>
+</tbody></table></div></section>
+<section id="events">
+<h2>未來 7 天重大事件</h2>
+<p class="note">時間皆為台灣時間（已依美國夏令／冬令時間換算）；財報日期可能因公司調整而變動</p>
+<p>（無資料）</p></section>
+<section id="foreign_buy">
+<h2>外資買超排行（前 20 名）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th>產業</th>
+<th>市場</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">買賣超(張)</th>
+<th class="num">金額(億)</th>
+<th class="num">佔成交量</th>
+<th class="num">連買天數</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>3231</td><td>緯創</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">189.50</td><td class="num up">+1.61%</td><td class="num up">+24,878</td><td class="num up">+47.14</td><td class="num">51.37%</td><td class="num">1</td></tr>
+<tr><td class="num">2</td><td>2344</td><td>華邦電</td><td>半導體業</td><td>上市</td><td class="num">181.00</td><td class="num up">+1.12%</td><td class="num up">+22,053</td><td class="num up">+39.92</td><td class="num">24.24%</td><td class="num">5</td></tr>
+<tr><td class="num">3</td><td>2887</td><td>台新新光金</td><td>金融保險</td><td>上市</td><td class="num">40.85</td><td class="num up">+0.74%</td><td class="num up">+13,701</td><td class="num up">+5.60</td><td class="num">37.49%</td><td class="num">1</td></tr>
+<tr><td class="num">4</td><td>2317</td><td>鴻海</td><td>其他電子業</td><td>上市</td><td class="num">254.00</td><td class="num up">+1.20%</td><td class="num up">+13,072</td><td class="num up">+33.20</td><td class="num">24.84%</td><td class="num">1</td></tr>
+<tr><td class="num">5</td><td>2481</td><td>強茂</td><td>半導體業</td><td>上市</td><td class="num">180.50</td><td class="num up">+3.44%</td><td class="num up">+12,257</td><td class="num up">+22.12</td><td class="num">21.89%</td><td class="num">1</td></tr>
+<tr><td class="num">6</td><td>2301</td><td>光寶科</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">298.00</td><td class="num up">+5.86%</td><td class="num up">+11,842</td><td class="num up">+35.29</td><td class="num">39.49%</td><td class="num">1</td></tr>
+<tr><td class="num">7</td><td>1815</td><td>富喬</td><td>電子零組件業</td><td>上櫃</td><td class="num">128.50</td><td class="num up">+6.20%</td><td class="num up">+11,227</td><td class="num up">+14.43</td><td class="num">15.27%</td><td class="num">2</td></tr>
+<tr><td class="num">8</td><td>2426</td><td>鼎元</td><td>光電業</td><td>上市</td><td class="num">114.00</td><td class="num up">+9.62%</td><td class="num up">+9,786</td><td class="num up">+11.16</td><td class="num">35.64%</td><td class="num">2</td></tr>
+<tr><td class="num">9</td><td>2330</td><td>台積電</td><td>半導體業</td><td>上市</td><td class="num">2,575.00</td><td class="num up">+3.00%</td><td class="num up">+9,771</td><td class="num up">+251.59</td><td class="num">36.46%</td><td class="num">1</td></tr>
+<tr><td class="num">10</td><td>3105</td><td>穩懋</td><td>半導體業</td><td>上櫃</td><td class="num">615.00</td><td class="num up">+4.06%</td><td class="num up">+9,742</td><td class="num up">+59.91</td><td class="num">20.24%</td><td class="num">4</td></tr>
+<tr><td class="num">11</td><td>1718</td><td>中纖</td><td>化學工業</td><td>上市</td><td class="num">11.15</td><td class="num up">+3.72%</td><td class="num up">+8,155</td><td class="num up">+0.91</td><td class="num">19.00%</td><td class="num">2</td></tr>
+<tr><td class="num">12</td><td>2308</td><td>台達電</td><td>電子零組件業</td><td>上市</td><td class="num">2,005.00</td><td class="num up">+6.37%</td><td class="num up">+7,963</td><td class="num up">+159.66</td><td class="num">44.64%</td><td class="num">1</td></tr>
+<tr><td class="num">13</td><td>2313</td><td>華通</td><td>電子零組件業</td><td>上市</td><td class="num">248.50</td><td class="num up">+9.96%</td><td class="num up">+7,880</td><td class="num up">+19.58</td><td class="num">15.32%</td><td class="num">2</td></tr>
+<tr><td class="num">14</td><td>1303</td><td>南亞</td><td>塑膠工業</td><td>上市</td><td class="num">286.00</td><td class="num up">+10.00%</td><td class="num up">+7,048</td><td class="num up">+20.16</td><td class="num">7.75%</td><td class="num">2</td></tr>
+<tr><td class="num">15</td><td>1714</td><td>和桐</td><td>化學工業</td><td>上市</td><td class="num">18.50</td><td class="num up">+9.79%</td><td class="num up">+6,575</td><td class="num up">+1.22</td><td class="num">13.26%</td><td class="num">2</td></tr>
+<tr><td class="num">16</td><td>4958</td><td>臻鼎-KY</td><td>電子零組件業</td><td>上市</td><td class="num">576.00</td><td class="num up">+2.67%</td><td class="num up">+6,264</td><td class="num up">+36.08</td><td class="num">11.03%</td><td class="num">5</td></tr>
+<tr><td class="num">17</td><td>8358</td><td>金居</td><td>電子零組件業</td><td>上櫃</td><td class="num">570.00</td><td class="num up">+9.83%</td><td class="num up">+5,007</td><td class="num up">+28.54</td><td class="num">11.87%</td><td class="num">3</td></tr>
+<tr><td class="num">18</td><td>3707</td><td>漢磊</td><td>半導體業</td><td>上櫃</td><td class="num">85.30</td><td class="num up">+0.12%</td><td class="num up">+4,981</td><td class="num up">+4.25</td><td class="num">8.87%</td><td class="num">4</td></tr>
+<tr><td class="num">19</td><td>6005</td><td>群益證</td><td>金融保險</td><td>上市</td><td class="num">33.00</td><td class="num up">+3.12%</td><td class="num up">+4,837</td><td class="num up">+1.60</td><td class="num">33.90%</td><td class="num">2</td></tr>
+<tr><td class="num">20</td><td>2412</td><td>中華電</td><td>通信網路業</td><td>上市</td><td class="num">145.50</td><td class="num down">-0.34%</td><td class="num up">+4,768</td><td class="num up">+6.94</td><td class="num">56.00%</td><td class="num">4</td></tr>
+</tbody></table></div></section>
+<section id="foreign_sell">
+<h2>外資賣超排行（前 20 名）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th>產業</th>
+<th>市場</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">買賣超(張)</th>
+<th class="num">金額(億)</th>
+<th class="num">佔成交量</th>
+<th class="num">連賣天數</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>2409</td><td>友達</td><td>光電業</td><td>上市</td><td class="num">39.05</td><td class="num down">-3.46%</td><td class="num down">-212,136</td><td class="num down">-82.84</td><td class="num">21.98%</td><td class="num">1</td></tr>
+<tr><td class="num">2</td><td>2303</td><td>聯電</td><td>半導體業</td><td>上市</td><td class="num">152.50</td><td class="num down">-5.57%</td><td class="num down">-81,562</td><td class="num down">-124.38</td><td class="num">24.81%</td><td class="num">1</td></tr>
+<tr><td class="num">3</td><td>6116</td><td>彩晶</td><td>光電業</td><td>上市</td><td class="num">15.90</td><td class="num down">-0.93%</td><td class="num down">-27,574</td><td class="num down">-4.38</td><td class="num">21.85%</td><td class="num">1</td></tr>
+<tr><td class="num">4</td><td>2324</td><td>仁寶</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">35.80</td><td class="num down">-1.10%</td><td class="num down">-25,066</td><td class="num down">-8.97</td><td class="num">57.36%</td><td class="num">3</td></tr>
+<tr><td class="num">5</td><td>2812</td><td>台中銀</td><td>金融保險</td><td>上市</td><td class="num">18.55</td><td class="num down">-1.07%</td><td class="num down">-19,205</td><td class="num down">-3.56</td><td class="num">63.53%</td><td class="num">8</td></tr>
+<tr><td class="num">6</td><td>1314</td><td>中石化</td><td>塑膠工業</td><td>上市</td><td class="num">8.67</td><td class="num down">-3.13%</td><td class="num down">-19,051</td><td class="num down">-1.65</td><td class="num">41.25%</td><td class="num">1</td></tr>
+<tr><td class="num">7</td><td>2834</td><td>臺企銀</td><td>金融保險</td><td>上市</td><td class="num">17.30</td><td class="num down">-0.86%</td><td class="num down">-17,675</td><td class="num down">-3.06</td><td class="num">52.72%</td><td class="num">10</td></tr>
+<tr><td class="num">8</td><td>6770</td><td>力積電</td><td>半導體業</td><td>上市</td><td class="num">75.80</td><td class="num down">-0.92%</td><td class="num down">-15,614</td><td class="num down">-11.84</td><td class="num">12.40%</td><td class="num">1</td></tr>
+<tr><td class="num">9</td><td>6182</td><td>合晶</td><td>半導體業</td><td>上櫃</td><td class="num">131.50</td><td class="num down">-2.59%</td><td class="num down">-15,357</td><td class="num down">-20.19</td><td class="num">16.64%</td><td class="num">1</td></tr>
+<tr><td class="num">10</td><td>2327</td><td>國巨*</td><td>電子零組件業</td><td>上市</td><td class="num">626.00</td><td class="num">+0.00%</td><td class="num down">-12,366</td><td class="num down">-77.41</td><td class="num">18.35%</td><td class="num">2</td></tr>
+<tr><td class="num">11</td><td>1101</td><td>台泥</td><td>水泥工業</td><td>上市</td><td class="num">25.00</td><td class="num down">-1.38%</td><td class="num down">-11,976</td><td class="num down">-2.99</td><td class="num">33.53%</td><td class="num">3</td></tr>
+<tr><td class="num">12</td><td>6239</td><td>力成</td><td>半導體業</td><td>上市</td><td class="num">297.50</td><td class="num down">-3.41%</td><td class="num down">-10,754</td><td class="num down">-31.99</td><td class="num">44.05%</td><td class="num">1</td></tr>
+<tr><td class="num">13</td><td>9904</td><td>寶成</td><td>其他</td><td>上市</td><td class="num">24.30</td><td class="num down">-1.62%</td><td class="num down">-9,676</td><td class="num down">-2.35</td><td class="num">65.05%</td><td class="num">4</td></tr>
+<tr><td class="num">14</td><td>2492</td><td>華新科</td><td>電子零組件業</td><td>上市</td><td class="num">368.50</td><td class="num up">+1.94%</td><td class="num down">-8,911</td><td class="num down">-32.84</td><td class="num">9.30%</td><td class="num">1</td></tr>
+<tr><td class="num">15</td><td>6147</td><td>頎邦</td><td>半導體業</td><td>上櫃</td><td class="num">216.00</td><td class="num down">-3.14%</td><td class="num down">-7,672</td><td class="num down">-16.57</td><td class="num">22.18%</td><td class="num">2</td></tr>
+<tr><td class="num">16</td><td>2610</td><td>華航</td><td>航運業</td><td>上市</td><td class="num">20.10</td><td class="num down">-1.23%</td><td class="num down">-7,398</td><td class="num down">-1.49</td><td class="num">53.93%</td><td class="num">3</td></tr>
+<tr><td class="num">17</td><td>2002</td><td>中鋼</td><td>鋼鐵工業</td><td>上市</td><td class="num">18.90</td><td class="num down">-0.53%</td><td class="num down">-7,384</td><td class="num down">-1.40</td><td class="num">27.49%</td><td class="num">1</td></tr>
+<tr><td class="num">18</td><td>2801</td><td>彰銀</td><td>金融保險</td><td>上市</td><td class="num">27.20</td><td class="num down">-1.45%</td><td class="num down">-7,368</td><td class="num down">-2.00</td><td class="num">41.51%</td><td class="num">2</td></tr>
+<tr><td class="num">19</td><td>2371</td><td>大同</td><td>電機機械</td><td>上市</td><td class="num">30.15</td><td class="num down">-3.05%</td><td class="num down">-6,919</td><td class="num down">-2.09</td><td class="num">37.11%</td><td class="num">1</td></tr>
+<tr><td class="num">20</td><td>3714</td><td>富采</td><td>光電業</td><td>上市</td><td class="num">68.20</td><td class="num down">-3.67%</td><td class="num down">-6,501</td><td class="num down">-4.43</td><td class="num">30.42%</td><td class="num">1</td></tr>
+</tbody></table></div></section>
+<section id="trust_buy">
+<h2>投信買超排行（前 20 名）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th>產業</th>
+<th>市場</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">買賣超(張)</th>
+<th class="num">金額(億)</th>
+<th class="num">佔成交量</th>
+<th class="num">連買天數</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>2327</td><td>國巨*</td><td>電子零組件業</td><td>上市</td><td class="num">626.00</td><td class="num">+0.00%</td><td class="num up">+3,094</td><td class="num up">+19.37</td><td class="num">4.59%</td><td class="num">3</td></tr>
+<tr><td class="num">2</td><td>2801</td><td>彰銀</td><td>金融保險</td><td>上市</td><td class="num">27.20</td><td class="num down">-1.45%</td><td class="num up">+1,411</td><td class="num up">+0.38</td><td class="num">7.95%</td><td class="num">4</td></tr>
+<tr><td class="num">3</td><td>4958</td><td>臻鼎-KY</td><td>電子零組件業</td><td>上市</td><td class="num">576.00</td><td class="num up">+2.67%</td><td class="num up">+1,323</td><td class="num up">+7.62</td><td class="num">2.33%</td><td class="num">2</td></tr>
+<tr><td class="num">4</td><td>3189</td><td>景碩</td><td>半導體業</td><td>上市</td><td class="num">1,095.00</td><td class="num up">+4.29%</td><td class="num up">+1,150</td><td class="num up">+12.59</td><td class="num">3.82%</td><td class="num">6</td></tr>
+<tr><td class="num">5</td><td>2882</td><td>國泰金</td><td>金融保險</td><td>上市</td><td class="num">111.50</td><td class="num">+0.00%</td><td class="num up">+1,062</td><td class="num up">+1.18</td><td class="num">7.61%</td><td class="num">3</td></tr>
+<tr><td class="num">6</td><td>2891</td><td>中信金</td><td>金融保險</td><td>上市</td><td class="num">67.40</td><td class="num up">+0.15%</td><td class="num up">+1,018</td><td class="num up">+0.69</td><td class="num">6.20%</td><td class="num">7</td></tr>
+<tr><td class="num">7</td><td>3081</td><td>聯亞</td><td>通信網路業</td><td>上櫃</td><td class="num">3,000.00</td><td class="num up">+2.56%</td><td class="num up">+676</td><td class="num up">+20.28</td><td class="num">9.55%</td><td class="num">2</td></tr>
+<tr><td class="num">8</td><td>8046</td><td>南電</td><td>電子零組件業</td><td>上市</td><td class="num">1,495.00</td><td class="num up">+2.40%</td><td class="num up">+666</td><td class="num up">+9.96</td><td class="num">4.40%</td><td class="num">4</td></tr>
+<tr><td class="num">9</td><td>2890</td><td>永豐金</td><td>金融保險</td><td>上市</td><td class="num">44.05</td><td class="num">+0.00%</td><td class="num up">+652</td><td class="num up">+0.29</td><td class="num">3.71%</td><td class="num">4</td></tr>
+<tr><td class="num">10</td><td>6505</td><td>台塑化</td><td>油電燃氣業</td><td>上市</td><td class="num">98.60</td><td class="num down">-1.40%</td><td class="num up">+652</td><td class="num up">+0.64</td><td class="num">3.23%</td><td class="num">9</td></tr>
+<tr><td class="num">11</td><td>1303</td><td>南亞</td><td>塑膠工業</td><td>上市</td><td class="num">286.00</td><td class="num up">+10.00%</td><td class="num up">+525</td><td class="num up">+1.50</td><td class="num">0.58%</td><td class="num">1</td></tr>
+<tr><td class="num">12</td><td>8070</td><td>長華*</td><td>電子通路業</td><td>上市</td><td class="num">51.70</td><td class="num up">+1.97%</td><td class="num up">+497</td><td class="num up">+0.26</td><td class="num">10.56%</td><td class="num">1</td></tr>
+<tr><td class="num">13</td><td>6274</td><td>台燿</td><td>電子零組件業</td><td>上櫃</td><td class="num">1,780.00</td><td class="num up">+9.88%</td><td class="num up">+496</td><td class="num up">+8.83</td><td class="num">4.07%</td><td class="num">2</td></tr>
+<tr><td class="num">14</td><td>6548</td><td>長科*</td><td>半導體業</td><td>上櫃</td><td class="num">78.00</td><td class="num up">+1.69%</td><td class="num up">+470</td><td class="num up">+0.37</td><td class="num">4.74%</td><td class="num">2</td></tr>
+<tr><td class="num">15</td><td>3450</td><td>聯鈞</td><td>其他電子業</td><td>上市</td><td class="num">548.00</td><td class="num up">+0.92%</td><td class="num up">+463</td><td class="num up">+2.54</td><td class="num">3.88%</td><td class="num">2</td></tr>
+<tr><td class="num">16</td><td>2330</td><td>台積電</td><td>半導體業</td><td>上市</td><td class="num">2,575.00</td><td class="num up">+3.00%</td><td class="num up">+439</td><td class="num up">+11.31</td><td class="num">1.64%</td><td class="num">5</td></tr>
+<tr><td class="num">17</td><td>3533</td><td>嘉澤</td><td>電子零組件業</td><td>上市</td><td class="num">1,875.00</td><td class="num up">+1.08%</td><td class="num up">+433</td><td class="num up">+8.12</td><td class="num">27.91%</td><td class="num">1</td></tr>
+<tr><td class="num">18</td><td>6257</td><td>矽格</td><td>半導體業</td><td>上市</td><td class="num">260.00</td><td class="num up">+0.97%</td><td class="num up">+432</td><td class="num up">+1.12</td><td class="num">2.13%</td><td class="num">5</td></tr>
+<tr><td class="num">19</td><td>2313</td><td>華通</td><td>電子零組件業</td><td>上市</td><td class="num">248.50</td><td class="num up">+9.96%</td><td class="num up">+412</td><td class="num up">+1.02</td><td class="num">0.80%</td><td class="num">2</td></tr>
+<tr><td class="num">20</td><td>2881</td><td>富邦金</td><td>金融保險</td><td>上市</td><td class="num">152.00</td><td class="num up">+1.00%</td><td class="num up">+407</td><td class="num up">+0.62</td><td class="num">3.66%</td><td class="num">3</td></tr>
+</tbody></table></div></section>
+<section id="trust_sell">
+<h2>投信賣超排行（前 20 名）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th>產業</th>
+<th>市場</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">買賣超(張)</th>
+<th class="num">金額(億)</th>
+<th class="num">佔成交量</th>
+<th class="num">連賣天數</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>2303</td><td>聯電</td><td>半導體業</td><td>上市</td><td class="num">152.50</td><td class="num down">-5.57%</td><td class="num down">-33,809</td><td class="num down">-51.56</td><td class="num">10.28%</td><td class="num">1</td></tr>
+<tr><td class="num">2</td><td>2886</td><td>兆豐金</td><td>金融保險</td><td>上市</td><td class="num">48.55</td><td class="num down">-0.61%</td><td class="num down">-5,455</td><td class="num down">-2.65</td><td class="num">39.11%</td><td class="num">1</td></tr>
+<tr><td class="num">3</td><td>3264</td><td>欣銓</td><td>半導體業</td><td>上櫃</td><td class="num">241.50</td><td class="num down">-1.43%</td><td class="num down">-4,703</td><td class="num down">-11.36</td><td class="num">24.05%</td><td class="num">8</td></tr>
+<tr><td class="num">4</td><td>2412</td><td>中華電</td><td>通信網路業</td><td>上市</td><td class="num">145.50</td><td class="num down">-0.34%</td><td class="num down">-1,874</td><td class="num down">-2.73</td><td class="num">22.01%</td><td class="num">2</td></tr>
+<tr><td class="num">5</td><td>2344</td><td>華邦電</td><td>半導體業</td><td>上市</td><td class="num">181.00</td><td class="num up">+1.12%</td><td class="num down">-1,848</td><td class="num down">-3.35</td><td class="num">2.03%</td><td class="num">10</td></tr>
+<tr><td class="num">6</td><td>2408</td><td>南亞科</td><td>半導體業</td><td>上市</td><td class="num">530.00</td><td class="num up">+0.76%</td><td class="num down">-1,817</td><td class="num down">-9.63</td><td class="num">4.29%</td><td class="num">1</td></tr>
+<tr><td class="num">7</td><td>3665</td><td>貿聯-KY</td><td>其他電子業</td><td>上市</td><td class="num">2,485.00</td><td class="num down">-2.17%</td><td class="num down">-1,759</td><td class="num down">-43.71</td><td class="num">32.80%</td><td class="num">1</td></tr>
+<tr><td class="num">8</td><td>2481</td><td>強茂</td><td>半導體業</td><td>上市</td><td class="num">180.50</td><td class="num up">+3.44%</td><td class="num down">-1,440</td><td class="num down">-2.60</td><td class="num">2.57%</td><td class="num">2</td></tr>
+<tr><td class="num">9</td><td>3037</td><td>欣興</td><td>電子零組件業</td><td>上市</td><td class="num">1,325.00</td><td class="num up">+1.53%</td><td class="num down">-1,274</td><td class="num down">-16.89</td><td class="num">4.70%</td><td class="num">1</td></tr>
+<tr><td class="num">10</td><td>4904</td><td>遠傳</td><td>通信網路業</td><td>上市</td><td class="num">105.50</td><td class="num down">-0.47%</td><td class="num down">-1,153</td><td class="num down">-1.22</td><td class="num">19.04%</td><td class="num">2</td></tr>
+<tr><td class="num">11</td><td>3026</td><td>禾伸堂</td><td>電子零組件業</td><td>上市</td><td class="num">817.00</td><td class="num down">-2.16%</td><td class="num down">-1,036</td><td class="num down">-8.46</td><td class="num">10.70%</td><td class="num">1</td></tr>
+<tr><td class="num">12</td><td>3711</td><td>日月光投控</td><td>半導體業</td><td>上市</td><td class="num">742.00</td><td class="num up">+4.07%</td><td class="num down">-879</td><td class="num down">-6.52</td><td class="num">4.89%</td><td class="num">2</td></tr>
+<tr><td class="num">13</td><td>2603</td><td>長榮</td><td>航運業</td><td>上市</td><td class="num">234.50</td><td class="num down">-2.29%</td><td class="num down">-748</td><td class="num down">-1.76</td><td class="num">8.29%</td><td class="num">2</td></tr>
+<tr><td class="num">14</td><td>1216</td><td>統一</td><td>食品工業</td><td>上市</td><td class="num">72.70</td><td class="num">+0.00%</td><td class="num down">-671</td><td class="num down">-0.49</td><td class="num">6.82%</td><td class="num">2</td></tr>
+<tr><td class="num">15</td><td>2633</td><td>台灣高鐵</td><td>航運業</td><td>上市</td><td class="num">25.65</td><td class="num down">-0.39%</td><td class="num down">-652</td><td class="num down">-0.17</td><td class="num">21.81%</td><td class="num">3</td></tr>
+<tr><td class="num">16</td><td>6805</td><td>富世達</td><td>電子零組件業</td><td>上市</td><td class="num">2,450.00</td><td class="num up">+6.06%</td><td class="num down">-577</td><td class="num down">-14.14</td><td class="num">22.56%</td><td class="num">6</td></tr>
+<tr><td class="num">17</td><td>2884</td><td>玉山金</td><td>金融保險</td><td>上市</td><td class="num">44.80</td><td class="num down">-1.21%</td><td class="num down">-501</td><td class="num down">-0.22</td><td class="num">2.56%</td><td class="num">1</td></tr>
+<tr><td class="num">18</td><td>2049</td><td>上銀</td><td>電機機械</td><td>上市</td><td class="num">345.50</td><td class="num up">+3.91%</td><td class="num down">-483</td><td class="num down">-1.67</td><td class="num">9.98%</td><td class="num">2</td></tr>
+<tr><td class="num">19</td><td>5876</td><td>上海商銀</td><td>金融保險</td><td>上市</td><td class="num">48.65</td><td class="num down">-0.61%</td><td class="num down">-428</td><td class="num down">-0.21</td><td class="num">9.07%</td><td class="num">1</td></tr>
+<tr><td class="num">20</td><td>3624</td><td>光頡</td><td>電子零組件業</td><td>上櫃</td><td class="num">145.50</td><td class="num down">-2.02%</td><td class="num down">-400</td><td class="num down">-0.58</td><td class="num">2.69%</td><td class="num">2</td></tr>
+</tbody></table></div></section>
+<section id="sync_buy">
+<h2>外資投信同步買超（前 20 名）</h2>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th>產業</th>
+<th>市場</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">外資(張)</th>
+<th class="num">投信(張)</th>
+<th class="num">合計金額(億)</th>
+<th class="num">合計佔成交量</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>2330</td><td>台積電</td><td>半導體業</td><td>上市</td><td class="num">2,575.00</td><td class="num up">+3.00%</td><td class="num up">+9,771</td><td class="num up">+439</td><td class="num up">+262.90</td><td class="num">38.10%</td></tr>
+<tr><td class="num">2</td><td>3105</td><td>穩懋</td><td>半導體業</td><td>上櫃</td><td class="num">615.00</td><td class="num up">+4.06%</td><td class="num up">+9,742</td><td class="num up">+255</td><td class="num up">+61.48</td><td class="num">20.77%</td></tr>
+<tr><td class="num">3</td><td>2313</td><td>華通</td><td>電子零組件業</td><td>上市</td><td class="num">248.50</td><td class="num up">+9.96%</td><td class="num up">+7,880</td><td class="num up">+412</td><td class="num up">+20.61</td><td class="num">16.12%</td></tr>
+<tr><td class="num">4</td><td>2308</td><td>台達電</td><td>電子零組件業</td><td>上市</td><td class="num">2,005.00</td><td class="num up">+6.37%</td><td class="num up">+7,963</td><td class="num up">+29</td><td class="num up">+160.24</td><td class="num">44.80%</td></tr>
+<tr><td class="num">5</td><td>4958</td><td>臻鼎-KY</td><td>電子零組件業</td><td>上市</td><td class="num">576.00</td><td class="num up">+2.67%</td><td class="num up">+6,264</td><td class="num up">+1,323</td><td class="num up">+43.70</td><td class="num">13.36%</td></tr>
+<tr><td class="num">6</td><td>1303</td><td>南亞</td><td>塑膠工業</td><td>上市</td><td class="num">286.00</td><td class="num up">+10.00%</td><td class="num up">+7,048</td><td class="num up">+525</td><td class="num up">+21.66</td><td class="num">8.33%</td></tr>
+<tr><td class="num">7</td><td>8358</td><td>金居</td><td>電子零組件業</td><td>上櫃</td><td class="num">570.00</td><td class="num up">+9.83%</td><td class="num up">+5,007</td><td class="num up">+96</td><td class="num up">+29.09</td><td class="num">12.10%</td></tr>
+<tr><td class="num">8</td><td>2376</td><td>技嘉</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">388.50</td><td class="num up">+4.02%</td><td class="num up">+3,144</td><td class="num up">+203</td><td class="num up">+13.00</td><td class="num">29.47%</td></tr>
+<tr><td class="num">9</td><td>2881</td><td>富邦金</td><td>金融保險</td><td>上市</td><td class="num">152.00</td><td class="num up">+1.00%</td><td class="num up">+2,098</td><td class="num up">+407</td><td class="num up">+3.81</td><td class="num">22.54%</td></tr>
+<tr><td class="num">10</td><td>3189</td><td>景碩</td><td>半導體業</td><td>上市</td><td class="num">1,095.00</td><td class="num up">+4.29%</td><td class="num up">+838</td><td class="num up">+1,150</td><td class="num up">+21.77</td><td class="num">6.61%</td></tr>
+<tr><td class="num">11</td><td>2883</td><td>凱基金</td><td>金融保險</td><td>上市</td><td class="num">37.30</td><td class="num down">-0.13%</td><td class="num up">+1,677</td><td class="num up">+27</td><td class="num up">+0.64</td><td class="num">5.07%</td></tr>
+<tr><td class="num">12</td><td>2882</td><td>國泰金</td><td>金融保險</td><td>上市</td><td class="num">111.50</td><td class="num">+0.00%</td><td class="num up">+462</td><td class="num up">+1,062</td><td class="num up">+1.70</td><td class="num">10.92%</td></tr>
+<tr><td class="num">13</td><td>8070</td><td>長華*</td><td>電子通路業</td><td>上市</td><td class="num">51.70</td><td class="num up">+1.97%</td><td class="num up">+638</td><td class="num up">+497</td><td class="num up">+0.59</td><td class="num">24.13%</td></tr>
+<tr><td class="num">14</td><td>2855</td><td>統一證</td><td>金融保險</td><td>上市</td><td class="num">58.20</td><td class="num up">+1.04%</td><td class="num up">+1,032</td><td class="num up">+31</td><td class="num up">+0.62</td><td class="num">33.49%</td></tr>
+<tr><td class="num">15</td><td>8046</td><td>南電</td><td>電子零組件業</td><td>上市</td><td class="num">1,495.00</td><td class="num up">+2.40%</td><td class="num up">+387</td><td class="num up">+666</td><td class="num up">+15.74</td><td class="num">6.96%</td></tr>
+<tr><td class="num">16</td><td>3034</td><td>聯詠</td><td>半導體業</td><td>上市</td><td class="num">543.00</td><td class="num up">+1.12%</td><td class="num up">+879</td><td class="num up">+163</td><td class="num up">+5.66</td><td class="num">43.30%</td></tr>
+<tr><td class="num">17</td><td>8021</td><td>尖點</td><td>其他電子業</td><td>上市</td><td class="num">560.00</td><td class="num up">+1.27%</td><td class="num up">+984</td><td class="num up">+35</td><td class="num up">+5.71</td><td class="num">8.35%</td></tr>
+<tr><td class="num">18</td><td>2395</td><td>研華</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">740.00</td><td class="num up">+3.35%</td><td class="num up">+867</td><td class="num up">+119</td><td class="num up">+7.29</td><td class="num">38.22%</td></tr>
+<tr><td class="num">19</td><td>3017</td><td>奇鋐</td><td>電腦及週邊設備業</td><td>上市</td><td class="num">3,585.00</td><td class="num up">+4.22%</td><td class="num up">+724</td><td class="num up">+247</td><td class="num up">+34.82</td><td class="num">21.08%</td></tr>
+<tr><td class="num">20</td><td>2368</td><td>金像電</td><td>電子零組件業</td><td>上市</td><td class="num">1,215.00</td><td class="num up">+9.95%</td><td class="num up">+918</td><td class="num up">+18</td><td class="num up">+11.37</td><td class="num">12.93%</td></tr>
+</tbody></table></div></section>
+<section id="foreign_streak">
+<h2>外資連續買超（連買 3 天以上，前 20 名）</h2>
+<p class="note">最多回溯 10 個交易日，天數為 10 表示至少連買 10 天；累計金額以今日收盤價估算</p>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th class="num">連買天數</th>
+<th class="num">累計買超(張)</th>
+<th class="num">累計金額(億)</th>
+<th class="num">今日買超(張)</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th>產業</th>
+<th>市場</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>6526</td><td>達發</td><td class="num">10</td><td class="num up">+5,230</td><td class="num up">+43.99</td><td class="num up">+87</td><td class="num">841.00</td><td class="num up">+0.72%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">2</td><td>6189</td><td>豐藝</td><td class="num">10</td><td class="num up">+2,046</td><td class="num up">+1.01</td><td class="num up">+136</td><td class="num">49.40</td><td class="num down">-1.00%</td><td>電子通路業</td><td>上市</td></tr>
+<tr><td class="num">3</td><td>3402</td><td>漢科</td><td class="num">10</td><td class="num up">+1,306</td><td class="num up">+1.83</td><td class="num up">+328</td><td class="num">140.00</td><td class="num up">+0.36%</td><td>其他電子類</td><td>上櫃</td></tr>
+<tr><td class="num">4</td><td>3564</td><td>其陽</td><td class="num">10</td><td class="num up">+959</td><td class="num up">+0.59</td><td class="num up">+38</td><td class="num">61.70</td><td class="num up">+9.98%</td><td>通信網路業</td><td>上櫃</td></tr>
+<tr><td class="num">5</td><td>3338</td><td>泰碩</td><td class="num">10</td><td class="num up">+897</td><td class="num up">+0.63</td><td class="num up">+215</td><td class="num">70.10</td><td class="num up">+1.59%</td><td>電子零組件業</td><td>上市</td></tr>
+<tr><td class="num">6</td><td>6944</td><td>兆聯實業</td><td class="num">10</td><td class="num up">+863</td><td class="num up">+7.02</td><td class="num up">+172</td><td class="num">814.00</td><td class="num up">+1.88%</td><td>綠能環保</td><td>上市</td></tr>
+<tr><td class="num">7</td><td>8084</td><td>巨虹</td><td class="num">10</td><td class="num up">+771</td><td class="num up">+0.15</td><td class="num up">+27</td><td class="num">19.65</td><td class="num down">-9.86%</td><td>電子通路業</td><td>上櫃</td></tr>
+<tr><td class="num">8</td><td>5299</td><td>杰力</td><td class="num">10</td><td class="num up">+721</td><td class="num up">+0.76</td><td class="num up">+78</td><td class="num">105.00</td><td class="num up">+0.48%</td><td>半導體業</td><td>上櫃</td></tr>
+<tr><td class="num">9</td><td>6275</td><td>元山</td><td class="num">10</td><td class="num up">+672</td><td class="num up">+0.32</td><td class="num up">+20</td><td class="num">47.65</td><td class="num down">-0.42%</td><td>電子零組件業</td><td>上櫃</td></tr>
+<tr><td class="num">10</td><td>2534</td><td>宏盛</td><td class="num">10</td><td class="num up">+594</td><td class="num up">+0.10</td><td class="num up">+76</td><td class="num">16.55</td><td class="num down">-0.90%</td><td>建材營造</td><td>上市</td></tr>
+<tr><td class="num">11</td><td>1702</td><td>南僑</td><td class="num">10</td><td class="num up">+581</td><td class="num up">+0.19</td><td class="num up">+4</td><td class="num">32.80</td><td class="num down">-1.06%</td><td>食品工業</td><td>上市</td></tr>
+<tr><td class="num">12</td><td>3093</td><td>港建*</td><td class="num">10</td><td class="num up">+535</td><td class="num up">+0.25</td><td class="num up">+51</td><td class="num">46.70</td><td class="num up">+1.08%</td><td>其他電子類</td><td>上櫃</td></tr>
+<tr><td class="num">13</td><td>3558</td><td>神準</td><td class="num">10</td><td class="num up">+414</td><td class="num up">+0.54</td><td class="num up">+45</td><td class="num">130.50</td><td class="num down">-0.38%</td><td>通信網路業</td><td>上櫃</td></tr>
+<tr><td class="num">14</td><td>1340</td><td>勝悅-KY</td><td class="num">10</td><td class="num up">+329</td><td class="num up">+0.02</td><td class="num up">+60</td><td class="num">5.22</td><td class="num up">+0.19%</td><td>塑膠工業</td><td>上市</td></tr>
+<tr><td class="num">15</td><td>7786</td><td>東方風能</td><td class="num">10</td><td class="num up">+271</td><td class="num up">+0.33</td><td class="num up">+93</td><td class="num">120.50</td><td class="num up">+2.55%</td><td>綠能環保</td><td>上市</td></tr>
+<tr><td class="num">16</td><td>6552</td><td>易華電</td><td class="num">10</td><td class="num up">+169</td><td class="num up">+0.04</td><td class="num up">+28</td><td class="num">24.95</td><td class="num up">+1.22%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">17</td><td>6194</td><td>育富</td><td class="num">10</td><td class="num up">+53</td><td class="num up">+0.02</td><td class="num up">+2</td><td class="num">30.05</td><td class="num up">+0.33%</td><td>電子零組件業</td><td>上櫃</td></tr>
+<tr><td class="num">18</td><td>3272</td><td>東碩</td><td class="num">10</td><td class="num up">+52</td><td class="num up">+0.01</td><td class="num up">+3</td><td class="num">14.15</td><td class="num up">+0.35%</td><td>電腦及週邊設備業</td><td>上櫃</td></tr>
+<tr><td class="num">19</td><td>1560</td><td>中砂</td><td class="num">9</td><td class="num up">+2,231</td><td class="num up">+23.20</td><td class="num up">+109</td><td class="num">1,040.00</td><td class="num up">+2.46%</td><td>電機機械</td><td>上市</td></tr>
+<tr><td class="num">20</td><td>3443</td><td>創意</td><td class="num">9</td><td class="num up">+1,042</td><td class="num up">+89.62</td><td class="num up">+31</td><td class="num">8,600.00</td><td class="num up">+8.86%</td><td>半導體業</td><td>上市</td></tr>
+</tbody></table></div></section>
+<section id="trust_streak">
+<h2>投信連續買超（連買 3 天以上，前 20 名）</h2>
+<p class="note">最多回溯 10 個交易日，天數為 10 表示至少連買 10 天；累計金額以今日收盤價估算</p>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th class="num">連買天數</th>
+<th class="num">累計買超(張)</th>
+<th class="num">累計金額(億)</th>
+<th class="num">今日買超(張)</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th>產業</th>
+<th>市場</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>6505</td><td>台塑化</td><td class="num">9</td><td class="num up">+25,098</td><td class="num up">+24.75</td><td class="num up">+652</td><td class="num">98.60</td><td class="num down">-1.40%</td><td>油電燃氣業</td><td>上市</td></tr>
+<tr><td class="num">2</td><td>2308</td><td>台達電</td><td class="num">9</td><td class="num up">+6,779</td><td class="num up">+135.92</td><td class="num up">+29</td><td class="num">2,005.00</td><td class="num up">+6.37%</td><td>電子零組件業</td><td>上市</td></tr>
+<tr><td class="num">3</td><td>6213</td><td>聯茂</td><td class="num">8</td><td class="num up">+1,978</td><td class="num up">+14.85</td><td class="num up">+52</td><td class="num">751.00</td><td class="num up">+9.96%</td><td>電子零組件業</td><td>上市</td></tr>
+<tr><td class="num">4</td><td>7856</td><td>漢測</td><td class="num">8</td><td class="num up">+753</td><td class="num up">+32.22</td><td class="num up">+4</td><td class="num">4,280.00</td><td class="num up">+2.03%</td><td>半導體業</td><td>上櫃</td></tr>
+<tr><td class="num">5</td><td>2891</td><td>中信金</td><td class="num">7</td><td class="num up">+11,798</td><td class="num up">+7.95</td><td class="num up">+1,018</td><td class="num">67.40</td><td class="num up">+0.15%</td><td>金融保險</td><td>上市</td></tr>
+<tr><td class="num">6</td><td>2379</td><td>瑞昱</td><td class="num">7</td><td class="num up">+1,408</td><td class="num up">+10.63</td><td class="num up">+137</td><td class="num">755.00</td><td class="num up">+0.13%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">7</td><td>3042</td><td>晶技</td><td class="num">6</td><td class="num up">+5,132</td><td class="num up">+11.39</td><td class="num up">+149</td><td class="num">222.00</td><td class="num down">-3.69%</td><td>電子零組件業</td><td>上市</td></tr>
+<tr><td class="num">8</td><td>3189</td><td>景碩</td><td class="num">6</td><td class="num up">+5,022</td><td class="num up">+54.99</td><td class="num up">+1,150</td><td class="num">1,095.00</td><td class="num up">+4.29%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">9</td><td>5347</td><td>世界</td><td class="num">6</td><td class="num up">+3,744</td><td class="num up">+6.89</td><td class="num up">+344</td><td class="num">184.00</td><td class="num down">-1.60%</td><td>半導體業</td><td>上櫃</td></tr>
+<tr><td class="num">10</td><td>4991</td><td>環宇-KY</td><td class="num">6</td><td class="num up">+1,070</td><td class="num up">+5.61</td><td class="num up">+235</td><td class="num">524.00</td><td class="num down">-1.87%</td><td>半導體業</td><td>上櫃</td></tr>
+<tr><td class="num">11</td><td>2458</td><td>義隆</td><td class="num">6</td><td class="num up">+815</td><td class="num up">+1.09</td><td class="num up">+276</td><td class="num">134.00</td><td class="num down">-2.90%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">12</td><td>3653</td><td>健策</td><td class="num">6</td><td class="num up">+543</td><td class="num up">+39.10</td><td class="num up">+18</td><td class="num">7,205.00</td><td class="num up">+5.96%</td><td>電子零組件業</td><td>上市</td></tr>
+<tr><td class="num">13</td><td>3014</td><td>聯陽</td><td class="num">6</td><td class="num up">+291</td><td class="num up">+0.43</td><td class="num up">+153</td><td class="num">146.50</td><td class="num up">+2.81%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">14</td><td>8016</td><td>矽創</td><td class="num">6</td><td class="num up">+231</td><td class="num up">+0.68</td><td class="num up">+75</td><td class="num">293.50</td><td class="num up">+0.86%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">15</td><td>2883</td><td>凱基金</td><td class="num">5</td><td class="num up">+20,641</td><td class="num up">+7.70</td><td class="num up">+27</td><td class="num">37.30</td><td class="num down">-0.13%</td><td>金融保險</td><td>上市</td></tr>
+<tr><td class="num">16</td><td>2330</td><td>台積電</td><td class="num">5</td><td class="num up">+2,680</td><td class="num up">+69.00</td><td class="num up">+439</td><td class="num">2,575.00</td><td class="num up">+3.00%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">17</td><td>6257</td><td>矽格</td><td class="num">5</td><td class="num up">+2,083</td><td class="num up">+5.42</td><td class="num up">+432</td><td class="num">260.00</td><td class="num up">+0.97%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">18</td><td>5536</td><td>聖暉*</td><td class="num">5</td><td class="num up">+991</td><td class="num up">+9.46</td><td class="num up">+3</td><td class="num">954.00</td><td class="num down">-0.21%</td><td>其他電子類</td><td>上櫃</td></tr>
+<tr><td class="num">19</td><td>6770</td><td>力積電</td><td class="num">5</td><td class="num up">+346</td><td class="num up">+0.26</td><td class="num up">+33</td><td class="num">75.80</td><td class="num down">-0.92%</td><td>半導體業</td><td>上市</td></tr>
+<tr><td class="num">20</td><td>2451</td><td>創見</td><td class="num">5</td><td class="num up">+330</td><td class="num up">+0.96</td><td class="num up">+134</td><td class="num">289.50</td><td class="num down">-0.17%</td><td>半導體業</td><td>上市</td></tr>
+</tbody></table></div></section>
+<section id="industry">
+<h2>產業別法人淨買賣（外資＋投信）</h2>
+<p class="note">金額以個股收盤價估算</p>
+<div class="table-wrap"><table><thead><tr>
+<th>產業</th>
+<th class="num">外資(億)</th>
+<th class="num">投信(億)</th>
+<th class="num">合計(億)</th>
+</tr></thead><tbody>
+<tr><td>半導體業</td><td class="num up">+272.42</td><td class="num down">-47.37</td><td class="num up">+225.05</td></tr>
+<tr><td>電子零組件業</td><td class="num up">+198.45</td><td class="num up">+18.86</td><td class="num up">+217.31</td></tr>
+<tr><td>電腦及週邊設備業</td><td class="num up">+121.58</td><td class="num down">-0.70</td><td class="num up">+120.88</td></tr>
+<tr><td>其他電子業</td><td class="num up">+102.26</td><td class="num down">-37.01</td><td class="num up">+65.25</td></tr>
+<tr><td>塑膠工業</td><td class="num up">+18.52</td><td class="num up">+1.50</td><td class="num up">+20.03</td></tr>
+<tr><td>電機機械</td><td class="num up">+14.31</td><td class="num down">-0.75</td><td class="num up">+13.56</td></tr>
+<tr><td>生技醫療業</td><td class="num up">+4.49</td><td class="num down">-0.02</td><td class="num up">+4.47</td></tr>
+<tr><td>金融保險</td><td class="num up">+4.27</td><td class="num down">-0.03</td><td class="num up">+4.24</td></tr>
+<tr><td>文化創意業</td><td class="num up">+3.87</td><td class="num down">-0.16</td><td class="num up">+3.71</td></tr>
+<tr><td>電子通路業</td><td class="num up">+3.15</td><td class="num down">-0.15</td><td class="num up">+3.00</td></tr>
+<tr><td>紡織纖維</td><td class="num up">+2.92</td><td class="num down">-0.10</td><td class="num up">+2.82</td></tr>
+<tr><td>創新板股票</td><td class="num up">+2.04</td><td class="num">+0.00</td><td class="num up">+2.04</td></tr>
+<tr><td>玻璃陶瓷</td><td class="num up">+1.89</td><td class="num">+0.00</td><td class="num up">+1.89</td></tr>
+<tr><td>綠能環保</td><td class="num up">+1.60</td><td class="num">+0.00</td><td class="num up">+1.60</td></tr>
+<tr><td>化學生技醫療</td><td class="num up">+1.71</td><td class="num down">-0.13</td><td class="num up">+1.59</td></tr>
+<tr><td>創新版股票</td><td class="num up">+0.30</td><td class="num">+0.00</td><td class="num up">+0.30</td></tr>
+<tr><td>金融業</td><td class="num up">+0.14</td><td class="num">+0.00</td><td class="num up">+0.14</td></tr>
+<tr><td>數位雲端</td><td class="num up">+0.13</td><td class="num">+0.00</td><td class="num up">+0.13</td></tr>
+<tr><td>觀光餐旅</td><td class="num up">+0.01</td><td class="num">+0.00</td><td class="num up">+0.01</td></tr>
+<tr><td>居家生活類</td><td class="num up">+0.00</td><td class="num">+0.00</td><td class="num up">+0.00</td></tr>
+<tr><td>運動休閒</td><td class="num up">+0.00</td><td class="num">+0.00</td><td class="num up">+0.00</td></tr>
+<tr><td>農業科技業</td><td class="num down">-0.01</td><td class="num">+0.00</td><td class="num down">-0.01</td></tr>
+<tr><td>數位雲端類</td><td class="num down">-0.04</td><td class="num">+0.00</td><td class="num down">-0.04</td></tr>
+<tr><td>觀光事業</td><td class="num up">+0.05</td><td class="num down">-0.12</td><td class="num down">-0.07</td></tr>
+<tr><td>電子商務業</td><td class="num down">-0.16</td><td class="num">+0.00</td><td class="num down">-0.16</td></tr>
+<tr><td>存託憑證</td><td class="num down">-0.17</td><td class="num">+0.00</td><td class="num down">-0.17</td></tr>
+<tr><td>綠能環保類</td><td class="num down">-0.28</td><td class="num">+0.00</td><td class="num down">-0.28</td></tr>
+<tr><td>造紙工業</td><td class="num down">-0.32</td><td class="num">+0.00</td><td class="num down">-0.32</td></tr>
+<tr><td>橡膠工業</td><td class="num down">-0.28</td><td class="num down">-0.05</td><td class="num down">-0.33</td></tr>
+<tr><td>貿易百貨</td><td class="num down">-0.49</td><td class="num up">+0.07</td><td class="num down">-0.43</td></tr>
+<tr><td>電器電纜</td><td class="num down">-0.51</td><td class="num down">-0.03</td><td class="num down">-0.53</td></tr>
+<tr><td>化學工業</td><td class="num down">-1.61</td><td class="num up">+0.02</td><td class="num down">-1.59</td></tr>
+<tr><td>資訊服務業</td><td class="num down">-2.02</td><td class="num up">+0.02</td><td class="num down">-2.00</td></tr>
+<tr><td>油電燃氣業</td><td class="num down">-3.25</td><td class="num up">+0.63</td><td class="num down">-2.61</td></tr>
+<tr><td>食品工業</td><td class="num down">-2.64</td><td class="num down">-0.49</td><td class="num down">-3.13</td></tr>
+<tr><td>鋼鐵工業</td><td class="num down">-3.10</td><td class="num down">-0.03</td><td class="num down">-3.13</td></tr>
+<tr><td>汽車工業</td><td class="num down">-3.77</td><td class="num up">+0.40</td><td class="num down">-3.36</td></tr>
+<tr><td>水泥工業</td><td class="num down">-3.33</td><td class="num down">-0.10</td><td class="num down">-3.43</td></tr>
+<tr><td>其他電子類</td><td class="num down">-4.96</td><td class="num down">-0.53</td><td class="num down">-5.50</td></tr>
+<tr><td>其他</td><td class="num down">-5.26</td><td class="num down">-0.28</td><td class="num down">-5.54</td></tr>
+<tr><td>建材營造</td><td class="num down">-6.53</td><td class="num down">-0.14</td><td class="num down">-6.67</td></tr>
+<tr><td>通信網路業</td><td class="num down">-20.95</td><td class="num up">+12.62</td><td class="num down">-8.33</td></tr>
+<tr><td>航運業</td><td class="num down">-12.18</td><td class="num down">-2.06</td><td class="num down">-14.23</td></tr>
+<tr><td>光電業</td><td class="num down">-104.89</td><td class="num up">+7.85</td><td class="num down">-97.04</td></tr>
+</tbody></table></div></section>
+<section id="etf">
+<h2>高股息 ETF 法人買賣超</h2>
+<p class="note">依三大法人合計買賣超排序；ETF 的自營商買賣多為造市避險，參考價值較低；外資連續天數正數為連買、負數為連賣</p>
+<div class="table-wrap"><table><thead><tr>
+<th>代號</th>
+<th>名稱</th>
+<th class="num">三大法人(張)</th>
+<th class="num">外資(張)</th>
+<th class="num">投信(張)</th>
+<th class="num">自營商(張)</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+<th class="num">成交量(張)</th>
+<th class="num">外資連續天數</th>
+</tr></thead><tbody>
+<tr><td>00940</td><td>元大台灣價值高息</td><td class="num up">+7,348</td><td class="num up">+2,600</td><td class="num">+0</td><td class="num up">+4,748</td><td class="num">13.26</td><td class="num up">+0.68%</td><td class="num">14,306</td><td class="num up">+1</td></tr>
+<tr><td>00918</td><td>大華優利高填息30</td><td class="num up">+2,189</td><td class="num up">+3,433</td><td class="num">+0</td><td class="num down">-1,244</td><td class="num">33.89</td><td class="num up">+0.24%</td><td class="num">37,274</td><td class="num up">+1</td></tr>
+<tr><td>00939</td><td>統一台灣高息動能</td><td class="num up">+1,933</td><td class="num up">+869</td><td class="num">+0</td><td class="num up">+1,064</td><td class="num">23.87</td><td class="num">+0.00%</td><td class="num">5,280</td><td class="num up">+1</td></tr>
+<tr><td>00915</td><td>凱基優選高股息30</td><td class="num up">+437</td><td class="num up">+837</td><td class="num">+0</td><td class="num down">-400</td><td class="num">32.86</td><td class="num down">-0.33%</td><td class="num">2,704</td><td class="num up">+1</td></tr>
+<tr><td>00929</td><td>復華台灣科技優息</td><td class="num up">+38</td><td class="num up">+481</td><td class="num">+0</td><td class="num down">-443</td><td class="num">30.05</td><td class="num up">+1.08%</td><td class="num">32,619</td><td class="num up">+1</td></tr>
+<tr><td>00713</td><td>元大台灣高息低波</td><td class="num down">-652</td><td class="num up">+298</td><td class="num up">+135</td><td class="num down">-1,085</td><td class="num">62.85</td><td class="num up">+0.24%</td><td class="num">4,828</td><td class="num up">+2</td></tr>
+<tr><td>00878</td><td>國泰永續高股息</td><td class="num down">-2,575</td><td class="num up">+565</td><td class="num">+0</td><td class="num down">-3,139</td><td class="num">35.11</td><td class="num up">+0.63%</td><td class="num">29,468</td><td class="num up">+1</td></tr>
+<tr><td>00934</td><td>中信成長高股息</td><td class="num down">-5,322</td><td class="num down">-715</td><td class="num">+0</td><td class="num down">-4,607</td><td class="num">30.08</td><td class="num up">+0.23%</td><td class="num">7,450</td><td class="num down">-3</td></tr>
+<tr><td>0056</td><td>元大高股息</td><td class="num down">-9,586</td><td class="num down">-5,745</td><td class="num up">+210</td><td class="num down">-4,051</td><td class="num">57.85</td><td class="num up">+1.40%</td><td class="num">45,449</td><td class="num down">-3</td></tr>
+<tr><td>00919</td><td>群益台灣精選高息</td><td class="num down">-19,295</td><td class="num down">-263</td><td class="num">+0</td><td class="num down">-19,031</td><td class="num">31.63</td><td class="num up">+0.25%</td><td class="num">68,541</td><td class="num down">-3</td></tr>
+</tbody></table></div></section>
+<section id="margin_up">
+<h2>融資增加排行（前 20 名）</h2>
+<p class="note">上市櫃普通股合計：融資 +0 張、融券 +0 張</p>
+<p>（無資料）</p></section>
+<section id="margin_down">
+<h2>融資減少排行（前 20 名）</h2>
+<p class="note">上市櫃普通股合計：融資 +0 張、融券 +0 張</p>
+<p>（無資料）</p></section>
+<section id="short_up">
+<h2>融券增加排行（前 20 名）</h2>
+<p class="note">上市櫃普通股合計：融資 +0 張、融券 +0 張</p>
+<p>（無資料）</p></section>
+<section id="holder_up">
+<h2>千張大戶持股增加（前 20 名）</h2>
+<p class="note">集保資料日期 2026-10-02（與前一週 2026-09-24 比較），每週更新一次；千張大戶指持股超過 1,000 張的股東；股東人數減少通常代表籌碼集中</p>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th class="num">週增減(百分點)</th>
+<th class="num">千張大戶持股</th>
+<th class="num">股東人數</th>
+<th class="num">人數增減</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>3520</td><td>華盈</td><td class="num up">+14.00</td><td class="num">42.63%</td><td class="num">48,728</td><td class="num up">+687</td><td class="num">18.05</td><td class="num up">+4.94%</td></tr>
+<tr><td class="num">2</td><td>6672</td><td>騰輝電子-KY</td><td class="num up">+8.17</td><td class="num">28.89%</td><td class="num">51,208</td><td class="num down">-3,086</td><td class="num">451.00</td><td class="num up">+2.73%</td></tr>
+<tr><td class="num">3</td><td>2484</td><td>希華</td><td class="num up">+6.20</td><td class="num">22.82%</td><td class="num">84,351</td><td class="num down">-4,350</td><td class="num">86.40</td><td class="num down">-0.12%</td></tr>
+<tr><td class="num">4</td><td>6533</td><td>晶心科</td><td class="num up">+4.66</td><td class="num">20.21%</td><td class="num">31,945</td><td class="num down">-2,340</td><td class="num">336.00</td><td class="num down">-4.55%</td></tr>
+<tr><td class="num">5</td><td>2340</td><td>台亞</td><td class="num up">+4.44</td><td class="num">38.17%</td><td class="num">107,273</td><td class="num down">-2,013</td><td class="num">50.30</td><td class="num up">+9.95%</td></tr>
+<tr><td class="num">6</td><td>6456</td><td>GIS-KY</td><td class="num up">+4.09</td><td class="num">54.41%</td><td class="num">31,851</td><td class="num down">-1,108</td><td class="num">90.60</td><td class="num down">-2.48%</td></tr>
+<tr><td class="num">7</td><td>6122</td><td>擎邦</td><td class="num up">+3.96</td><td class="num">27.10%</td><td class="num">34,450</td><td class="num down">-569</td><td class="num">61.80</td><td class="num down">-3.29%</td></tr>
+<tr><td class="num">8</td><td>3105</td><td>穩懋</td><td class="num up">+3.77</td><td class="num">53.46%</td><td class="num">112,980</td><td class="num down">-12,555</td><td class="num">615.00</td><td class="num up">+4.06%</td></tr>
+<tr><td class="num">9</td><td>6432</td><td>今展科</td><td class="num up">+3.65</td><td class="num">20.28%</td><td class="num">35,951</td><td class="num down">-340</td><td class="num">67.10</td><td class="num up">+0.75%</td></tr>
+<tr><td class="num">10</td><td>6658</td><td>聯策</td><td class="num up">+3.55</td><td class="num">35.05%</td><td class="num">10,864</td><td class="num down">-46</td><td class="num">200.00</td><td class="num up">+9.89%</td></tr>
+<tr><td class="num">11</td><td>6207</td><td>雷科</td><td class="num up">+3.49</td><td class="num">11.35%</td><td class="num">68,122</td><td class="num down">-876</td><td class="num">152.00</td><td class="num up">+2.70%</td></tr>
+<tr><td class="num">12</td><td>8103</td><td>瀚荃</td><td class="num up">+3.48</td><td class="num">31.04%</td><td class="num">20,567</td><td class="num up">+212</td><td class="num">121.50</td><td class="num up">+0.41%</td></tr>
+<tr><td class="num">13</td><td>3013</td><td>晟銘電</td><td class="num up">+3.41</td><td class="num">43.34%</td><td class="num">48,321</td><td class="num up">+52</td><td class="num">93.00</td><td class="num up">+0.32%</td></tr>
+<tr><td class="num">14</td><td>8150</td><td>南茂</td><td class="num up">+3.39</td><td class="num">64.10%</td><td class="num">122,014</td><td class="num down">-7,622</td><td class="num">124.00</td><td class="num down">-2.36%</td></tr>
+<tr><td class="num">15</td><td>6214</td><td>精誠</td><td class="num up">+3.35</td><td class="num">63.67%</td><td class="num">46,538</td><td class="num down">-537</td><td class="num">188.50</td><td class="num">+0.00%</td></tr>
+<tr><td class="num">16</td><td>3684</td><td>榮昌</td><td class="num up">+3.31</td><td class="num">56.18%</td><td class="num">6,093</td><td class="num down">-18</td><td class="num">55.20</td><td class="num up">+1.85%</td></tr>
+<tr><td class="num">17</td><td>4566</td><td>時碩工業</td><td class="num up">+3.31</td><td class="num">51.48%</td><td class="num">25,014</td><td class="num down">-531</td><td class="num">77.50</td><td class="num up">+2.24%</td></tr>
+<tr><td class="num">18</td><td>2030</td><td>彰源</td><td class="num up">+3.29</td><td class="num">51.90%</td><td class="num">59,909</td><td class="num up">+4,908</td><td class="num">36.90</td><td class="num down">-3.91%</td></tr>
+<tr><td class="num">19</td><td>9949</td><td>琉園</td><td class="num up">+3.23</td><td class="num">58.15%</td><td class="num">10,989</td><td class="num down">-23</td><td class="num">24.40</td><td class="num up">+0.41%</td></tr>
+<tr><td class="num">20</td><td>6426</td><td>統新</td><td class="num up">+3.19</td><td class="num">41.57%</td><td class="num">19,187</td><td class="num up">+1,685</td><td class="num">357.50</td><td class="num down">-1.11%</td></tr>
+</tbody></table></div></section>
+<section id="holder_down">
+<h2>千張大戶持股減少（前 20 名）</h2>
+<p class="note">集保資料日期 2026-10-02（與前一週 2026-09-24 比較），每週更新一次；千張大戶指持股超過 1,000 張的股東；股東人數減少通常代表籌碼集中</p>
+<div class="table-wrap"><table><thead><tr>
+<th class="num">排名</th>
+<th>代號</th>
+<th>名稱</th>
+<th class="num">週增減(百分點)</th>
+<th class="num">千張大戶持股</th>
+<th class="num">股東人數</th>
+<th class="num">人數增減</th>
+<th class="num">收盤</th>
+<th class="num">漲跌幅</th>
+</tr></thead><tbody>
+<tr><td class="num">1</td><td>4554</td><td>橙的</td><td class="num down">-6.44</td><td class="num">50.62%</td><td class="num">2,427</td><td class="num up">+69</td><td class="num">27.85</td><td class="num down">-0.89%</td></tr>
+<tr><td class="num">2</td><td>1727</td><td>中華化</td><td class="num down">-5.63</td><td class="num">56.64%</td><td class="num">21,535</td><td class="num up">+5,522</td><td class="num">117.50</td><td class="num down">-4.47%</td></tr>
+<tr><td class="num">3</td><td>3693</td><td>營邦</td><td class="num down">-5.24</td><td class="num">36.52%</td><td class="num">23,601</td><td class="num up">+957</td><td class="num">689.00</td><td class="num up">+3.92%</td></tr>
+<tr><td class="num">4</td><td>2415</td><td>錩新</td><td class="num down">-4.00</td><td class="num">54.53%</td><td class="num">9,128</td><td class="num up">+321</td><td class="num">27.90</td><td class="num up">+1.82%</td></tr>
+<tr><td class="num">5</td><td>2342</td><td>茂矽</td><td class="num down">-3.80</td><td class="num">31.75%</td><td class="num">143,973</td><td class="num up">+3,540</td><td class="num">49.40</td><td class="num down">-3.70%</td></tr>
+<tr><td class="num">6</td><td>3264</td><td>欣銓</td><td class="num down">-3.63</td><td class="num">61.51%</td><td class="num">85,050</td><td class="num up">+10,417</td><td class="num">241.50</td><td class="num down">-1.43%</td></tr>
+<tr><td class="num">7</td><td>2254</td><td>巨鎧精密-創</td><td class="num down">-3.53</td><td class="num">83.54%</td><td class="num">2,762</td><td class="num up">+17</td><td class="num">94.80</td><td class="num up">+0.53%</td></tr>
+<tr><td class="num">8</td><td>6423</td><td>億而得-創</td><td class="num down">-3.48</td><td class="num">19.58%</td><td class="num">3,207</td><td class="num down">-49</td><td class="num">92.00</td><td class="num down">-3.66%</td></tr>
+<tr><td class="num">9</td><td>6179</td><td>亞通</td><td class="num down">-3.31</td><td class="num">30.68%</td><td class="num">50,086</td><td class="num down">-13</td><td class="num">35.75</td><td class="num down">-2.05%</td></tr>
+<tr><td class="num">10</td><td>1815</td><td>富喬</td><td class="num down">-3.27</td><td class="num">45.14%</td><td class="num">158,256</td><td class="num up">+6,756</td><td class="num">128.50</td><td class="num up">+6.20%</td></tr>
+<tr><td class="num">11</td><td>1295</td><td>生合</td><td class="num down">-3.05</td><td class="num">41.89%</td><td class="num">3,255</td><td class="num down">-34</td><td class="num">49.05</td><td class="num up">+0.72%</td></tr>
+<tr><td class="num">12</td><td>4956</td><td>光鋐</td><td class="num down">-2.99</td><td class="num">32.74%</td><td class="num">44,184</td><td class="num up">+1,125</td><td class="num">45.55</td><td class="num down">-1.83%</td></tr>
+<tr><td class="num">13</td><td>3490</td><td>單井</td><td class="num down">-2.96</td><td class="num">16.11%</td><td class="num">34,185</td><td class="num down">-156</td><td class="num">46.15</td><td class="num down">-8.97%</td></tr>
+<tr><td class="num">14</td><td>6933</td><td>AMAX-KY</td><td class="num down">-2.95</td><td class="num">59.80%</td><td class="num">5,612</td><td class="num up">+1,019</td><td class="num">384.00</td><td class="num up">+1.32%</td></tr>
+<tr><td class="num">15</td><td>5245</td><td>智晶</td><td class="num down">-2.32</td><td class="num">36.99%</td><td class="num">3,934</td><td class="num up">+40</td><td class="num">20.55</td><td class="num down">-0.96%</td></tr>
+<tr><td class="num">16</td><td>3605</td><td>宏致</td><td class="num down">-2.25</td><td class="num">59.37%</td><td class="num">43,002</td><td class="num up">+2,070</td><td class="num">168.00</td><td class="num down">-1.47%</td></tr>
+<tr><td class="num">17</td><td>7760</td><td>享溫馨</td><td class="num down">-2.24</td><td class="num">47.84%</td><td class="num">1,475</td><td class="num down">-3</td><td class="num">32.80</td><td class="num up">+0.92%</td></tr>
+<tr><td class="num">18</td><td>6191</td><td>精成科</td><td class="num down">-2.22</td><td class="num">51.32%</td><td class="num">89,980</td><td class="num up">+9,689</td><td class="num">85.90</td><td class="num up">+1.42%</td></tr>
+<tr><td class="num">19</td><td>4806</td><td>桂田文創</td><td class="num down">-2.19</td><td class="num">83.69%</td><td class="num">2,479</td><td class="num down">-10,790</td><td class="num">12.10</td><td class="num down">-9.70%</td></tr>
+<tr><td class="num">20</td><td>8084</td><td>巨虹</td><td class="num down">-2.02</td><td class="num">45.03%</td><td class="num">4,639</td><td class="num up">+704</td><td class="num">19.65</td><td class="num down">-9.86%</td></tr>
+</tbody></table></div></section>
+</main>
+</body>
+</html>
